@@ -1,19 +1,14 @@
 package ca.uwaterloo.cs346project
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,27 +31,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Cs346projectTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Greeting("Android")
+                    //LoginPage()
+                    HomePage()
                 }
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun LoginPage() { var username by remember { mutableStateOf("") }
+fun LoginPage() {
+    var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -75,7 +63,7 @@ fun LoginPage() { var username by remember { mutableStateOf("") }
             modifier = Modifier.padding(16.dp)
         )
 
-        TextField(
+        OutlinedTextField(
             value = username,
             onValueChange = { username = it },
             modifier = Modifier
@@ -84,7 +72,7 @@ fun LoginPage() { var username by remember { mutableStateOf("") }
             label = { Text("Username") }
         )
 
-        TextField(
+        OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             modifier = Modifier
@@ -117,12 +105,79 @@ fun LoginPage() { var username by remember { mutableStateOf("") }
 }
 
 
-
-@Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-    Cs346projectTheme {
-        //Greeting("Android")
-        LoginPage()
+fun HomePage() {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    val buttonModifier = Modifier
+        .fillMaxWidth()
+        .padding(8.dp)
+
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Button(
+            onClick = { isExpanded = !isExpanded },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(0.dp)
+        ) {
+            Text(if (isExpanded) "Collapse" else "Expand", fontSize = 24.sp)
+        }
+
+        // Use AnimatedVisibility to animate the buttons
+        AnimatedVisibility(visible = isExpanded) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Button(
+                    onClick = { /* Handle button click */ },
+                    modifier = buttonModifier
+                ) {
+                    Text("Schedule of Courses", fontSize = 24.sp)
+                }
+                Button(
+                    onClick = { /* Handle button click */ },
+                    modifier = buttonModifier
+                ) {
+                    Text("Course Materials and Info", fontSize = 24.sp)
+                }
+                Button(
+                    onClick = { /* Handle button click */ },
+                    modifier = buttonModifier
+                ) {
+                    Text("Ratings for Courses", fontSize = 24.sp)
+                }
+                Button(
+                    onClick = { /* Handle button click */ },
+                    modifier = buttonModifier
+                ) {
+                    Text("Mode", fontSize = 24.sp)
+                }
+                Button(
+                    onClick = { /* Handle button click */ },
+                    modifier = buttonModifier
+                ) {
+                    Text("Quit", fontSize = 24.sp)
+                }
+            }
+        }
     }
 }
+
+
+@Composable
+fun CMI() {}
+
+
+@Composable
+fun rating() {}
+
+
+@Composable
+fun Mode() {}
+
+
+@Composable
+fun Quit() {}
+
