@@ -50,8 +50,7 @@ fun CourseInfoScreen(courseCode: String, courseName: String, courseDescription: 
                 bottom = 16.dp
             )
     ) {
-        Text(text = courseCode, fontSize = 24.sp)
-        Text(text = courseName, fontSize = 24.sp)
+        Text(text = "$courseCode: $courseName", fontSize = 20.sp)
         Text(text = courseDescription, fontSize = 16.sp)
         Text(text = "Instructor: $instructorName", fontSize = 16.sp)
     }
