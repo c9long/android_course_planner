@@ -205,7 +205,14 @@ fun HomePage() {
 
 
                 Button(
-                    onClick = { /* Handle button click */ },
+                    onClick = {
+                        showColumn1 = false
+                        showColumn2 = false
+                        showColumn3 = false
+                        showColumn4 = false
+                        showColumn5 = true
+                        isExpanded = false
+                    },
                     modifier = buttonModifier
                 ) {
                     Text("Quit", fontSize = 24.sp)
@@ -245,7 +252,7 @@ fun HomePage() {
 
         if (showColumn5) {
             // here should quit to loginpage
-            Text("Quit")
+            LoginPage()
         }
     }
 }
@@ -259,7 +266,7 @@ fun HomePage() {
 fun Ratings() {
 
     var searchText by remember { mutableStateOf("") }
-    var searchResults by remember { mutableStateOf("") }
+//    var searchResults by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier.fillMaxWidth()
