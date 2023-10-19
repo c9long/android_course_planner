@@ -2,6 +2,7 @@ package ca.uwaterloo.cs346project
 
 import android.annotation.SuppressLint
 import android.app.appsearch.SearchResults
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,12 +23,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
 import androidx.compose.runtime.*
-
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -205,7 +205,14 @@ fun HomePage() {
 
 
                 Button(
-                    onClick = { /* Handle button click */ },
+                    onClick = {
+                        showColumn1 = false
+                        showColumn2 = false
+                        showColumn3 = false
+                        showColumn4 = false
+                        showColumn5 = true
+                        isExpanded = false
+                    },
                     modifier = buttonModifier
                 ) {
                     Text("Quit", fontSize = 24.sp)
@@ -218,7 +225,21 @@ fun HomePage() {
         }
 
         if (showColumn2) {
-            CMI()
+            val context = LocalContext.current
+            val courseInfoIntent = Intent(context, CourseInfoActivity::class.java)
+
+            // Pass relevant course information using intent extras
+            courseInfoIntent.putExtra("COURSE_CODE", "CS 111")
+            courseInfoIntent.putExtra("COURSE_NAME", "Introduction to Programming")
+            courseInfoIntent.putExtra("COURSE_DESCRIPTION", "Learn the basics of programming using popular programming languages.")
+            courseInfoIntent.putExtra("INSTRUCTOR_NAME", "John Doe")
+            courseInfoIntent.putExtra("COURSE_OFFERING", arrayListOf("Monday 10:00 AM - 12:00 PM",
+                                                        "Wednesday 2:00 PM - 4:00 PM",
+                                                        "Friday 10:00 AM - 12:00 PM")
+            )
+
+            context.startActivity(courseInfoIntent)
+            showColumn2 = false
         }
 
         if (showColumn3) {
@@ -231,61 +252,13 @@ fun HomePage() {
 
         if (showColumn5) {
             // here should quit to loginpage
-            Text("Quit")
+            LoginPage()
         }
     }
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CMI() {
-    var tasks by remember { mutableStateOf(mutableMapOf<String, String>()) }
-    var dayOfWeek by remember { mutableStateOf("") }
-    var taskText by remember { mutableStateOf("") }
 
-    var isExpanded by remember { mutableStateOf(false) }
-
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        FloatingActionButton(
-            onClick = {isExpanded = !isExpanded
-                if (dayOfWeek.isNotEmpty() && taskText.isNotEmpty()) {
-                    tasks[dayOfWeek] = taskText
-                    dayOfWeek = ""
-                    taskText = ""
-                }
-            },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
-        ) {
-            Text(if (isExpanded) "-" else "+")
-        }
-
-        // Use AnimatedVisibility to animate the buttons
-        AnimatedVisibility(visible = isExpanded) {
-            OutlinedTextField(
-                value = dayOfWeek,
-                onValueChange = { dayOfWeek = it },
-                placeholder = { Text("Enter Course Name") },
-                modifier = Modifier.padding(16.dp).fillMaxWidth()
-            )
-        }
-
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            tasks.forEach { (day, task) ->
-                Text(
-                    text = "$day: $task",
-                    fontSize = 18.sp,
-                    color = Color.Black
-                )
-            }
-        }
-    }
-}
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -293,7 +266,7 @@ fun CMI() {
 fun Ratings() {
 
     var searchText by remember { mutableStateOf("") }
-    var searchResults by remember { mutableStateOf("") }
+//    var searchResults by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier.fillMaxWidth()

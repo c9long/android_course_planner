@@ -23,6 +23,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".CourseInfoActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Cs346project">
+            <intent-filter>
+                <action android:name="com.example.action.VIEW_COURSE_INFO" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
