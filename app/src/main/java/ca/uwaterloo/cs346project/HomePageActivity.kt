@@ -93,7 +93,7 @@ fun HomePage() {
             },
             modifier = buttonModifier
         ) {
-            Text("Course Materials and Info", fontSize = 24.sp)
+            Text("Course Search", fontSize = 24.sp)
         }
 
         Button(
@@ -142,19 +142,9 @@ fun HomePage() {
 
     if (showColumn2) {
         val context = LocalContext.current
-        val courseInfoIntent = Intent(context, CourseInfoActivity::class.java)
+        val courseActivityIntent = Intent(context, CourseSearchActivity::class.java)
 
-        // Pass relevant course information using intent extras
-        courseInfoIntent.putExtra("COURSE_CODE", "CS 111")
-        courseInfoIntent.putExtra("COURSE_NAME", "Introduction to Programming")
-        courseInfoIntent.putExtra("COURSE_DESCRIPTION", "Learn the basics of programming using popular programming languages.")
-        courseInfoIntent.putExtra("INSTRUCTOR_NAME", "John Doe")
-        courseInfoIntent.putExtra("COURSE_OFFERING", arrayListOf("Monday 10:00 AM - 12:00 PM",
-            "Wednesday 2:00 PM - 4:00 PM",
-            "Friday 10:00 AM - 12:00 PM")
-        )
-
-        context.startActivity(courseInfoIntent)
+        context.startActivity(courseActivityIntent)
         //showColumn2 = false
     }
 
