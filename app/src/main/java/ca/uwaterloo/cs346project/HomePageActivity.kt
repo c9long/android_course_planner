@@ -4,27 +4,20 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 
 class HomePageActivity : ComponentActivity() {
@@ -80,7 +73,7 @@ fun HomePage() {
             },
             modifier = buttonModifier
         ) {
-            Text("Courses Schedule", fontSize = 24.sp)
+            Text("Course Schedule", fontSize = 24.sp)
         }
 
         Button(
@@ -93,7 +86,7 @@ fun HomePage() {
             },
             modifier = buttonModifier
         ) {
-            Text("Course Materials and Info", fontSize = 24.sp)
+            Text("Course Search", fontSize = 24.sp)
         }
 
 
@@ -120,20 +113,10 @@ fun HomePage() {
 
     if (showColumn2) {
         val context = LocalContext.current
-        val courseInfoIntent = Intent(context, CourseInfoActivity::class.java)
-
-        // Pass relevant course information using intent extras
-        courseInfoIntent.putExtra("COURSE_CODE", "CS 111")
-        courseInfoIntent.putExtra("COURSE_NAME", "Introduction to Programming")
-        courseInfoIntent.putExtra("COURSE_DESCRIPTION", "Learn the basics of programming using popular programming languages.")
-        courseInfoIntent.putExtra("INSTRUCTOR_NAME", "John Doe")
-        courseInfoIntent.putExtra("COURSE_OFFERING", arrayListOf("Monday 10:00 AM - 12:00 PM",
-            "Wednesday 2:00 PM - 4:00 PM",
-            "Friday 10:00 AM - 12:00 PM")
-        )
-
-        context.startActivity(courseInfoIntent)
-        showColumn2 = false
+        val courseActivityIntent = Intent(context, CourseSearchActivity::class.java)
+        
+        context.startActivity(courseActivityIntent)
+        //showColumn2 = false
     }
 
 
