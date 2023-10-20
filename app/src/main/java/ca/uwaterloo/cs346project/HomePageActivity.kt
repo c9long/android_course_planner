@@ -115,6 +115,7 @@ fun HomePage() {
         val context = LocalContext.current
         val scheduleIntent = Intent(context, ScheduleActivity::class.java)
         context.startActivity(scheduleIntent)
+        showColumn1 = false
     }
 
     if (showColumn2) {

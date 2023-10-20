@@ -124,11 +124,13 @@ fun LoginPage() {
         val context = LocalContext.current
         val hpIntent = Intent(context, HomePageActivity::class.java)
         context.startActivity(hpIntent)
+        Login = false
     }
 
     if (SignUp) {
-            val context = LocalContext.current
-            val SignUpIntent = Intent(context, SignUpActivity::class.java)
-            context.startActivity(SignUpIntent)
+        val context = LocalContext.current
+        val SignUpIntent = Intent(context, SignUpActivity::class.java)
+        context.startActivity(SignUpIntent)
+        SignUp = false
     }
 }
