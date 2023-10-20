@@ -21,7 +21,7 @@ class HomePage : ComponentActivity() {
         setContent {
             Cs346projectTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Title("Placeholder")
+                    aTitle("Placeholder")
                 }
             }
         }
