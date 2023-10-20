@@ -44,15 +44,7 @@ class MainActivity : ComponentActivity() {
             Cs346projectTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Title("Placeholder")
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(top = 135.dp, start = 15.dp, end = 15.dp)
-                    ) {
-                        Text(
-                            text = "View course schedule information and reviews from UW students"
-                        )
-                    }
-                    Search(listOf("CS348", "CS246", "ECON201", "SCI206"))
+                    SearchPage()
                 }
             }
         }
@@ -60,35 +52,32 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-            text = "Hello $name!",
-            modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    Cs346projectTheme {
-        Greeting("Android")
-    }
-}
-
-@Composable
-fun Title(title: String) {
+fun SearchPage() {
+    // Title
     Box(
         Modifier
             .fillMaxSize()
             .padding(15.dp)
     ) {
         Text(
-            text = title,
+            text = "Schedule of Courses",
             fontSize = 30.sp,
             modifier = Modifier
                 .align(Alignment.TopCenter)
         )
     }
+
+    // Text under search bar
+    Box(
+        modifier = Modifier.fillMaxSize().padding(top = 135.dp, start = 15.dp, end = 15.dp)
+    ) {
+        Text(
+            text = "View course schedule information and reviews from UW students"
+        )
+    }
+
+    // Search Bar
+    Search(listOf("CS348", "CS246", "ECON201", "SCI206"))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
