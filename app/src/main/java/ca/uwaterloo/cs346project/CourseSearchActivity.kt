@@ -1,5 +1,6 @@
 package ca.uwaterloo.cs346project
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.ui.platform.LocalContext
 
 class CourseSearchActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,6 +55,7 @@ class CourseSearchActivity : ComponentActivity() {
 @Composable
 fun SearchPage() {
     var userSearchText by remember { mutableStateOf("") } // Current string the user is searching for
+    var courseSelected by remember { mutableStateOf(false) }
     val courses: List<String> = listOf("CS111")
 
     MaterialTheme (
@@ -109,7 +112,7 @@ fun SearchPage() {
                     items(filtered) { selected ->
                         Row(
                             modifier = Modifier
-                                .clickable(onClick = { /* ON CLICK */ })
+                                .clickable(onClick = { courseSelected = true })
                                 .background(Color.LightGray)
                                 .fillMaxWidth()
                                 .padding(PaddingValues(12.dp, 16.dp))
@@ -121,4 +124,23 @@ fun SearchPage() {
             }
         }
     }
+
+    if (courseSelected) {
+        // TODO Un-hardcode this
+        val context = LocalContext.current
+        val courseInfoIntent = Intent(context, CourseInfoActivity::class.java)
+
+        // Pass relevant course information using intent extras
+        courseInfoIntent.putExtra("COURSE_CODE", "CS 111")
+        courseInfoIntent.putExtra("COURSE_NAME", "Introduction to Programming")
+        courseInfoIntent.putExtra("COURSE_DESCRIPTION", "Learn the basics of programming using popular programming languages.")
+        courseInfoIntent.putExtra("INSTRUCTOR_NAME", "John Doe")
+        courseInfoIntent.putExtra("COURSE_OFFERING", arrayListOf("Monday 10:00 AM - 12:00 PM",
+            "Wednesday 2:00 PM - 4:00 PM",
+            "Friday 10:00 AM - 12:00 PM")
+        )
+
+        context.startActivity(courseInfoIntent)
+    }
 }
+
