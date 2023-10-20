@@ -176,7 +176,8 @@ fun PreviewCourseInfoScreen() {
         "Learn the basics of programming using popular programming languages.",
         "John Doe",
         listOf("Monday 10:00 AM - 12:00 PM",
-        "Wednesday 2:00 PM - 4:00 PM",
-        "Friday 10:00 AM - 12:00 PM")
+            "Wednesday 2:00 PM - 4:00 PM",
+            "Friday 10:00 AM - 12:00 PM")
     )
 }
+

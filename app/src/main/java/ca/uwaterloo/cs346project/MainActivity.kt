@@ -1,15 +1,11 @@
 package ca.uwaterloo.cs346project
 
-import android.annotation.SuppressLint
-import android.app.appsearch.SearchResults
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,13 +17,13 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.font.FontWeight.Companion.Bold
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
-import androidx.compose.runtime.*
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,6 +31,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             Cs346projectTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    //LoginPage()
                     HomePage()
                     //CMI()
                 }
@@ -58,13 +55,16 @@ fun LoginPage() {
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-
     ) {
         Text(
             text = "Course Planner",
-            fontSize = 26.sp,
-            fontWeight = Bold,
-            modifier = Modifier.padding(16.dp)
+            fontSize = 40.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF2196F3),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
         )
 
         OutlinedTextField(
@@ -82,14 +82,14 @@ fun LoginPage() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
-            label = { Text("Password") }
+            label = { Text("Password") },
+            visualTransformation = PasswordVisualTransformation() // Hide the password
         )
 
         Button(
             onClick = {
                 // Handle login action here
                 keyboardController?.hide()
-
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -105,155 +105,146 @@ fun LoginPage() {
                 // Handle signup action here
             }
         )
-    }
 
+        Text(
+            text = "Forgot Password / Username?",
+            color = Color.Gray,
+            modifier = Modifier.clickable {
+                // Handle "Forgot Password" action here
+            }
+        )
+    }
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+
+
+
 @Composable
 fun HomePage() {
-    var isExpanded by remember { mutableStateOf(false) }
-
     val buttonModifier = Modifier
         .fillMaxWidth()
         .padding(8.dp)
 
-    var showColumn1 by remember { mutableStateOf(true) }
+    var showColumn1 by remember { mutableStateOf(false) }
     var showColumn2 by remember { mutableStateOf(false) }
     var showColumn3 by remember { mutableStateOf(false) }
     var showColumn4 by remember { mutableStateOf(false) }
     var showColumn5 by remember { mutableStateOf(false) }
 
 
-
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
+        Text(
+            text = "Course Planner",
+            fontSize = 40.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF2196F3),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        )
         Button(
-            onClick = { isExpanded = !isExpanded },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(0.dp)
+            onClick = {
+                showColumn1 = true
+                showColumn2 = false
+                showColumn3 = false
+                showColumn4 = false
+                showColumn5 = false
+            },
+            modifier = buttonModifier
         ) {
-            Text(if (isExpanded) "Collapse" else "Expand", fontSize = 24.sp)
+            Text("Schedule of Courses", fontSize = 24.sp)
         }
 
-        // Use AnimatedVisibility to animate the buttons
-        AnimatedVisibility(visible = isExpanded) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                Button(
-                    onClick = {
-                        showColumn1 = true
-                        showColumn2 = false
-                        showColumn3 = false
-                        showColumn4 = false
-                        showColumn5 = false
-                        isExpanded = false
-                    },
-                    modifier = buttonModifier
-                ) {
-                    Text("Schedule of Courses", fontSize = 24.sp)
-                }
-
-
-                Button(
-                    onClick = {
-                        showColumn1 = false
-                        showColumn2 = true
-                        showColumn3 = false
-                        showColumn4 = false
-                        showColumn5 = false
-                        isExpanded = false
-                    },
-                    modifier = buttonModifier
-                ) {
-                    Text("Course Materials and Info", fontSize = 24.sp)
-                }
-
-
-                Button(
-                    onClick = {
-                        showColumn1 = false
-                        showColumn2 = false
-                        showColumn3 = true
-                        showColumn4 = false
-                        showColumn5 = false
-                        isExpanded = false
-                    },
-                    modifier = buttonModifier
-                ) {
-                    Text("Ratings for Courses", fontSize = 24.sp)
-                }
-
-
-                Button(
-                    onClick = {
-                        showColumn1 = false
-                        showColumn2 = false
-                        showColumn3 = false
-                        showColumn4 = true
-                        showColumn5 = false
-                        isExpanded = false
-                    },
-                    modifier = buttonModifier
-                ) {
-                    Text("Mode", fontSize = 24.sp)
-                }
-
-
-                Button(
-                    onClick = {
-                        showColumn1 = false
-                        showColumn2 = false
-                        showColumn3 = false
-                        showColumn4 = false
-                        showColumn5 = true
-                        isExpanded = false
-                    },
-                    modifier = buttonModifier
-                ) {
-                    Text("Quit", fontSize = 24.sp)
-                }
-            }
+        Button(
+            onClick = {
+                showColumn1 = false
+                showColumn2 = true
+                showColumn3 = false
+                showColumn4 = false
+                showColumn5 = false
+            },
+            modifier = buttonModifier
+        ) {
+            Text("Course Materials and Info", fontSize = 24.sp)
         }
 
-        if (showColumn1) {
-            Text("Course Schedule")
+        Button(
+            onClick = {
+                showColumn1 = false
+                showColumn2 = false
+                showColumn3 = true
+                showColumn4 = false
+                showColumn5 = false
+            },
+            modifier = buttonModifier
+        ) {
+            Text("Ratings for Courses", fontSize = 24.sp)
         }
 
-        if (showColumn2) {
-            val context = LocalContext.current
-            val courseInfoIntent = Intent(context, CourseInfoActivity::class.java)
-
-            // Pass relevant course information using intent extras
-            courseInfoIntent.putExtra("COURSE_CODE", "CS 111")
-            courseInfoIntent.putExtra("COURSE_NAME", "Introduction to Programming")
-            courseInfoIntent.putExtra("COURSE_DESCRIPTION", "Learn the basics of programming using popular programming languages.")
-            courseInfoIntent.putExtra("INSTRUCTOR_NAME", "John Doe")
-            courseInfoIntent.putExtra("COURSE_OFFERING", arrayListOf("Monday 10:00 AM - 12:00 PM",
-                                                        "Wednesday 2:00 PM - 4:00 PM",
-                                                        "Friday 10:00 AM - 12:00 PM")
-            )
-
-            context.startActivity(courseInfoIntent)
-            showColumn2 = false
+        Button(
+            onClick = {
+                showColumn1 = false
+                showColumn2 = false
+                showColumn3 = false
+                showColumn4 = true
+                showColumn5 = false
+            },
+            modifier = buttonModifier
+        ) {
+            Text("Mode", fontSize = 24.sp)
         }
 
-        if (showColumn3) {
-            Ratings()
+        Button(
+            onClick = {
+                showColumn1 = false
+                showColumn2 = false
+                showColumn3 = false
+                showColumn4 = false
+                showColumn5 = true
+            },
+            modifier = buttonModifier
+        ) {
+            Text("Quit", fontSize = 24.sp)
         }
+    }
 
-        if (showColumn4) {
-            Text("Mode")
-        }
+    if (showColumn1) {
 
-        if (showColumn5) {
-            // here should quit to loginpage
-            LoginPage()
-        }
+    }
+
+    if (showColumn2) {
+        val context = LocalContext.current
+        val courseInfoIntent = Intent(context, CourseInfoActivity::class.java)
+
+        // Pass relevant course information using intent extras
+        courseInfoIntent.putExtra("COURSE_CODE", "CS 111")
+        courseInfoIntent.putExtra("COURSE_NAME", "Introduction to Programming")
+        courseInfoIntent.putExtra("COURSE_DESCRIPTION", "Learn the basics of programming using popular programming languages.")
+        courseInfoIntent.putExtra("INSTRUCTOR_NAME", "John Doe")
+        courseInfoIntent.putExtra("COURSE_OFFERING", arrayListOf("Monday 10:00 AM - 12:00 PM",
+            "Wednesday 2:00 PM - 4:00 PM",
+            "Friday 10:00 AM - 12:00 PM")
+        )
+
+        context.startActivity(courseInfoIntent)
+        //showColumn2 = false
+    }
+
+    if (showColumn3) {
+        Ratings()
+    }
+
+    if (showColumn4) {
+
+    }
+
+    if (showColumn5) {
+        // when click quit, should jump to loginPage
+        //LoginPage()
     }
 }
 
@@ -281,10 +272,11 @@ fun Ratings() {
         Spacer(modifier = Modifier.height(16.dp))
         if (searchText.isNotEmpty()) {
             Text("Search Results for: $searchText", fontSize = 18.sp, color = Color.Black, modifier = Modifier.padding(16.dp))
-           // Add your search result UI here
+            // Add your search result UI here
         }
     }
 }
+
 
 
 
