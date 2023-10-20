@@ -113,5 +113,6 @@ fun SignupPage() {
 
     if (success) {
         LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
+        success = false
     }
 }

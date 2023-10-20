@@ -116,7 +116,7 @@ fun HomePage() {
         val courseActivityIntent = Intent(context, CourseSearchActivity::class.java)
         
         context.startActivity(courseActivityIntent)
-        //showColumn2 = false
+        showColumn2 = false
     }
 
 
