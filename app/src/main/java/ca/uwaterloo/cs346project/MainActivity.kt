@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             Cs346projectTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    startActivity(Intent(this, CourseSearchActivity::class.java))
+                    startActivity(Intent(this, LoginActivity::class.java))
                 }
             }
         }
