@@ -80,7 +80,7 @@ fun HomePage() {
             },
             modifier = buttonModifier
         ) {
-            Text("Schedule of Courses", fontSize = 24.sp)
+            Text("Courses Schedule", fontSize = 24.sp)
         }
 
         Button(
@@ -96,6 +96,7 @@ fun HomePage() {
             Text("Course Materials and Info", fontSize = 24.sp)
         }
 
+
         Button(
             onClick = {
                 showColumn1 = false
@@ -106,33 +107,7 @@ fun HomePage() {
             },
             modifier = buttonModifier
         ) {
-            Text("Ratings for Courses", fontSize = 24.sp)
-        }
-
-        Button(
-            onClick = {
-                showColumn1 = false
-                showColumn2 = false
-                showColumn3 = false
-                showColumn4 = true
-                showColumn5 = false
-            },
-            modifier = buttonModifier
-        ) {
-            Text("Mode", fontSize = 24.sp)
-        }
-
-        Button(
-            onClick = {
-                showColumn1 = false
-                showColumn2 = false
-                showColumn3 = false
-                showColumn4 = false
-                showColumn5 = true
-            },
-            modifier = buttonModifier
-        ) {
-            Text("Quit", fontSize = 24.sp)
+            Text("Log Out", fontSize = 24.sp)
         }
     }
 
@@ -155,19 +130,13 @@ fun HomePage() {
         )
 
         context.startActivity(courseInfoIntent)
-        //showColumn2 = false
+        showColumn2 = false
     }
+
 
     if (showColumn3) {
-        //Ratings()
-    }
-
-    if (showColumn4) {
-
-    }
-
-    if (showColumn5) {
         LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
+        showColumn3 = false
     }
 }
 
