@@ -49,7 +49,8 @@ fun LoginPage() {
     var password by remember { mutableStateOf("") }
 
     val keyboardController = LocalSoftwareKeyboardController.current
-    var showColumn by remember { mutableStateOf(false) }
+    var Login by remember { mutableStateOf(false) }
+    var SignUp by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -93,7 +94,7 @@ fun LoginPage() {
             onClick = {
                 // Handle login action here
                 keyboardController?.hide()
-                showColumn = true
+                Login = true
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -106,12 +107,12 @@ fun LoginPage() {
             text = "Don't have an account? Sign up.",
             color = Color.Blue,
             modifier = Modifier.clickable {
-                // Handle signup action here
+                SignUp = true
             }
         )
 
         Text(
-            text = "Forgot Password / Username?",
+            text = "Forgot Password?",
             color = Color.Gray,
             modifier = Modifier.clickable {
                 // Handle "Forgot Password" action here
@@ -119,9 +120,15 @@ fun LoginPage() {
         )
     }
 
-    if (showColumn) {
+    if (Login) {
         val context = LocalContext.current
         val hpIntent = Intent(context, HomePageActivity::class.java)
         context.startActivity(hpIntent)
+    }
+
+    if (SignUp) {
+            val context = LocalContext.current
+            val SignUpIntent = Intent(context, SignUpActivity::class.java)
+            context.startActivity(SignUpIntent)
     }
 }
