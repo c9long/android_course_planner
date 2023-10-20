@@ -100,7 +100,7 @@ private val sampleEvents = listOf(
         name = "CS 121",
         color = Color(0xFF1B998B),
         start = LocalDateTime.parse("2021-05-18T16:50:00"),
-        end = LocalDateTime.parse("2021-05-18T17:00:00"),
+        end = LocalDateTime.parse("2021-05-18T18:00:00"),
         description = "An arbitrary CS course placeholder description.",
     ),
     Event(
@@ -121,7 +121,7 @@ private val sampleEvents = listOf(
         name = "CS 136",
         color = Color(0xFF1B998B),
         start = LocalDateTime.parse("2021-05-20T12:00:00"),
-        end = LocalDateTime.parse("2021-05-20T13:00:00"),
+        end = LocalDateTime.parse("2021-05-20T13:50:00"),
         description = "An arbitrary CS course placeholder description.",
     ),
 )
