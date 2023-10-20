@@ -46,8 +46,6 @@ fun HomePage() {
     var showColumn1 by remember { mutableStateOf(false) }
     var showColumn2 by remember { mutableStateOf(false) }
     var showColumn3 by remember { mutableStateOf(false) }
-    var showColumn4 by remember { mutableStateOf(false) }
-    var showColumn5 by remember { mutableStateOf(false) }
 
 
     Column(
@@ -68,8 +66,6 @@ fun HomePage() {
                 showColumn1 = true
                 showColumn2 = false
                 showColumn3 = false
-                showColumn4 = false
-                showColumn5 = false
             },
             modifier = buttonModifier
         ) {
@@ -81,8 +77,6 @@ fun HomePage() {
                 showColumn1 = false
                 showColumn2 = true
                 showColumn3 = false
-                showColumn4 = false
-                showColumn5 = false
             },
             modifier = buttonModifier
         ) {
@@ -95,8 +89,6 @@ fun HomePage() {
                 showColumn1 = false
                 showColumn2 = false
                 showColumn3 = true
-                showColumn4 = false
-                showColumn5 = false
             },
             modifier = buttonModifier
         ) {
@@ -118,7 +110,6 @@ fun HomePage() {
         context.startActivity(courseActivityIntent)
         showColumn2 = false
     }
-
 
     if (showColumn3) {
         LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
