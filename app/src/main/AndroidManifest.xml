@@ -27,23 +27,7 @@
             android:exported="true"
             android:theme="@style/Theme.Cs346project">
             <intent-filter>
-                <action android:name="com.example.action.VIEW_COURSE_INFO" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".HomePageActivity"
-                  android:exported="true"
-                  android:theme="@style/Theme.Cs346project">
-            <intent-filter>
-                <action android:name="com.example.action.HOME" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".LoginActivity"
-                  android:exported="true"
-                  android:theme="@style/Theme.Cs346project">
-            <intent-filter>
-                <action android:name="com.example.action.LOGIN" />
+                <action android:name="com.example.action.COURSE_SEARCH" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
