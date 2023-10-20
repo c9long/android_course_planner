@@ -47,6 +47,14 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity android:name=".ScheduleActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Cs346project">
+            <intent-filter>
+                <action android:name="com.example.action.SCHEDULE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name=".SignUpActivity"
                   android:exported="true"
                   android:theme="@style/Theme.Cs346project">
