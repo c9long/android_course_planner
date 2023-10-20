@@ -73,7 +73,7 @@ fun HomePage() {
             },
             modifier = buttonModifier
         ) {
-            Text("Courses Schedule", fontSize = 24.sp)
+            Text("Course Schedule", fontSize = 24.sp)
         }
 
         Button(
