@@ -52,7 +52,7 @@ class CourseSearchActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchPage() {
-    var state by remember { mutableStateOf("") }
+    var userSearchText by remember { mutableStateOf("") } // Current string the user is searching for
     val courses: List<String> = listOf("CS111")
 
     MaterialTheme (
@@ -82,8 +82,8 @@ fun SearchPage() {
 
             // Search Bar
             TextField(
-                value = state,
-                onValueChange = { state = it },
+                value = userSearchText,
+                onValueChange = { userSearchText = it },
                 placeholder = { Text("Search") },
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                 singleLine = true,
@@ -96,10 +96,10 @@ fun SearchPage() {
 
                 // Search Suggestions
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    val filtered: List<String> = if (!state.isEmpty()) {
+                    val filtered: List<String> = if (!userSearchText.isEmpty()) {
                         val result = ArrayList<String>()
                         for (course in courses) {
-                            if (course.lowercase().startsWith(state.lowercase())) {
+                            if (course.lowercase().startsWith(userSearchText.lowercase())) {
                                 result.add(course)
                             }
                         }
