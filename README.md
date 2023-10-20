@@ -1,16 +1,10 @@
 # CS346 Project
-
-## Goal
-A brief description of your project. What is it? What does it do?
-
-## Team Members
-Owen Wong: o8wong@uwaterloo.ca
-Christopher Long: christopher.long@uwaterloo.ca
-Dylan Grinton: dgrinton@uwaterloo.ca
-Barry Yu: j462yu@uwaterloo.ca
-
-## Project Documents
+## Proposal
 View our project's proposal [here.](https://git.uwaterloo.ca/dgrinton/cs346-project/-/wikis/Project-Proposal)
-
+## Meeting Minutes
+View the logged meeting minutes [here.](https://git.uwaterloo.ca/dgrinton/cs346-project/-/wikis/Meeting-Minutes)
 ## Software Releases
-Here are our Release Notes
+View all software releases [here.](https://git.uwaterloo.ca/dgrinton/cs346-project/-/tree/main/release)
+### v0.1
+- [Release Notes](https://git.uwaterloo.ca/dgrinton/cs346-project/-/blob/main/release/v0.1-release-notes.md)
+- [Installer](https://git.uwaterloo.ca/dgrinton/cs346-project/-/blob/main/release/v0.1-installer.apk)
