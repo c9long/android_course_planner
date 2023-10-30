@@ -5,26 +5,25 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
+
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,6 +50,9 @@ fun LoginPage() {
     val keyboardController = LocalSoftwareKeyboardController.current
     var Login by remember { mutableStateOf(false) }
     var SignUp by remember { mutableStateOf(false) }
+
+    val dbHelper = UserDBHelper(LocalContext.current)
+    var errorMessage by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -94,13 +96,27 @@ fun LoginPage() {
             onClick = {
                 // Handle login action here
                 keyboardController?.hide()
-                Login = true
+                if (dbHelper.validateUser(username, password)) {
+                    Login = true
+                    errorMessage = ""
+                } else {
+                    // Display error message: Invalid credentials
+                    errorMessage = "Invalid credentials. Please try again."
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp)
         ) {
             Text(text = "Login")
+        }
+
+        if (errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                color = Color.Red, // You can set the color to indicate an error
+                modifier = Modifier.padding(8.dp)
+            )
         }
 
         Text(
@@ -133,4 +149,5 @@ fun LoginPage() {
         context.startActivity(SignUpIntent)
         SignUp = false
     }
+
 }

@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -21,6 +22,7 @@ import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import java.security.MessageDigest
 
 class SignUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,12 +41,22 @@ class SignUpActivity : ComponentActivity() {
 }
 
 
+fun hashPassword(password: String): String {
+    val bytes = password.toByteArray()
+    val md = MessageDigest.getInstance("SHA-256")
+    val digest = md.digest(bytes)
+    return digest.fold("") { str, it -> str + "%02x".format(it) }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignupPage() {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var success by remember { mutableStateOf(false) }
+
+    var errorMessage by remember { mutableStateOf("") }
+    val dbHelper = UserDBHelper(LocalContext.current)
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -89,7 +101,18 @@ fun SignupPage() {
         ) {
             Button(
                 onClick = {
-                    success = true
+                    if (username.isEmpty() || password.isEmpty()) {
+                        errorMessage = "Please fill in all fields."
+                    } else if (dbHelper.checkUser(username)) {
+                        errorMessage = "Username already exists."
+                    } else {
+                        val hashedPassword = hashPassword(password) // Replace with actual hashing function
+                        if (dbHelper.addUser(username, hashedPassword)) {
+                            success = true // Navigate to login on successful registration
+                        } else {
+                            errorMessage = "Failed to create account. Please try again."
+                        }
+                    }
                 },
                 modifier = Modifier
                     .weight(1f)
@@ -108,6 +131,17 @@ fun SignupPage() {
             ) {
                 Text(text = "Back", fontSize = 18.sp)
             }
+        }
+
+        if (errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            )
         }
     }
 
