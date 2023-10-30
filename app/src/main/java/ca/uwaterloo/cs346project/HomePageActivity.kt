@@ -29,7 +29,8 @@ class HomePageActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    HomePage()
+                    val currentlyLoggedInUser = intent.getStringExtra("CURRENT_USER") ?: ""
+                    HomePage(currentlyLoggedInUser)
                 }
             }
         }
@@ -38,7 +39,7 @@ class HomePageActivity : ComponentActivity() {
 
 
 @Composable
-fun HomePage() {
+fun HomePage(currentlyLoggedInUser: String) {
     val buttonModifier = Modifier
         .fillMaxWidth()
         .padding(8.dp)
@@ -106,7 +107,7 @@ fun HomePage() {
     if (showColumn2) {
         val context = LocalContext.current
         val courseActivityIntent = Intent(context, CourseSearchActivity::class.java)
-        
+        courseActivityIntent.putExtra("CURRENT_USER", currentlyLoggedInUser)
         context.startActivity(courseActivityIntent)
         showColumn2 = false
     }

@@ -139,6 +139,7 @@ fun LoginPage() {
     if (Login) {
         val context = LocalContext.current
         val hpIntent = Intent(context, HomePageActivity::class.java)
+        hpIntent.putExtra("CURRENT_USER", username)
         context.startActivity(hpIntent)
         Login = false
     }

@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,6 +51,7 @@ class CourseInfoActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     // Extract course information from intent extras
+                    val currentlyLoggedInUser = intent.getStringExtra("CURRENT_USER") ?: ""
                     val courseCode = intent.getStringExtra("COURSE_CODE") ?: ""
                     val courseName = intent.getStringExtra("COURSE_NAME") ?: ""
                     val courseDescription = intent.getStringExtra("COURSE_DESCRIPTION") ?: ""
@@ -58,7 +60,7 @@ class CourseInfoActivity : ComponentActivity() {
                         intent.getStringArrayListExtra("COURSE_OFFERING") ?: emptyList()
 
                     CourseInfoScreen(
-                        courseCode, courseName, courseDescription, instructorName,
+                        currentlyLoggedInUser, courseCode, courseName, courseDescription, instructorName,
                         courseOfferings, onBackButtonClick = { navigateBackToMainActivity() }
                     )
                 }
@@ -80,6 +82,7 @@ class CourseInfoActivity : ComponentActivity() {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun CourseInfoScreen(
+    currentlyLoggedInUser: String,
     courseCode: String,
     courseName: String,
     courseDescription: String,
@@ -91,30 +94,11 @@ fun CourseInfoScreen(
         typography = Typography(),
         shapes = Shapes()
     ) {
-
+        val dbHelper = UserDBHelper(LocalContext.current)
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
             var isDialogOpen by remember { mutableStateOf(false) }
-            val courseReviewsList = remember {
-                mutableListOf(
-                    CourseReview("John Doe", "October 10, 2023", "Great course!", 4),
-                    CourseReview("Jane Smith", "October 12, 2023", "I learned a lot.", 3),
-                )
-            }
-
-            /*
-            create table reviews ( \
-                rnum            integer not null (make it auto-generated and unique)
-                username?       varchar(60) not null, \
-                date            varchar(20) not null, \
-                content         varchar(MAX) not null, \
-                stars           integer not null, \
-                primary key (rnum), \
-                foreign key (username?) references user(username?))
-
-            insert into reviews values (...)
-            */
 
             Text(
                 text = "$courseCode: $courseName",
@@ -155,7 +139,9 @@ fun CourseInfoScreen(
 
                     // Add a divider between rows except for the last row
                     if (index < courseOfferings.size - 1) {
-                        Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
+                        Divider(modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp))
                     }
                 }
             }
@@ -169,19 +155,19 @@ fun CourseInfoScreen(
                 Text(text = "Add a Review for $courseCode")
             }
 
-            // Check if the dialog should be open
+//          Check if the dialog should be open
             if (isDialogOpen) {
                 ReviewDialog(
                     onDismiss = { isDialogOpen = false },
                     onSubmitReview = { reviewContent, rating ->
                         val currentDate = SimpleDateFormat("MMMM dd, yyyy", Locale.US).format(Date())
-                        val newReview = CourseReview("John Joe", currentDate, reviewContent, rating)
-                        courseReviewsList += newReview
+                        val newReview = CourseReview(currentlyLoggedInUser, currentDate, reviewContent, rating)
+                        dbHelper.addReview(newReview)
                     }
                 )
             }
 
-            CourseReviews(courseReviewsList)
+            CourseReviews(dbHelper.getAllReviews())
 
             Box(
                 modifier = Modifier
@@ -313,6 +299,7 @@ fun RatingBar(
 @Composable
 fun PreviewCourseInfoScreen() {
     CourseInfoScreen(
+        "abel",
         "CS111",
         "Introduction to Programming",
         "Learn the basics of programming using popular programming languages.",

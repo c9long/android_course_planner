@@ -44,7 +44,8 @@ class CourseSearchActivity : ComponentActivity() {
             Cs346projectTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    SearchPage()
+                    val currentlyLoggedInUser = intent.getStringExtra("CURRENT_USER") ?: ""
+                    SearchPage(currentlyLoggedInUser)
                 }
             }
         }
@@ -53,7 +54,7 @@ class CourseSearchActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchPage() {
+fun SearchPage(currentlyLoggedInUser: String) {
     var userSearchText by remember { mutableStateOf("") } // Current string the user is searching for
     var courseSelected by remember { mutableStateOf(false) }
     val courses: List<String> = listOf("CS111")
@@ -131,6 +132,7 @@ fun SearchPage() {
         val courseInfoIntent = Intent(context, CourseInfoActivity::class.java)
 
         // Pass relevant course information using intent extras
+        courseInfoIntent.putExtra("CURRENT_USER", currentlyLoggedInUser)
         courseInfoIntent.putExtra("COURSE_CODE", "CS 111")
         courseInfoIntent.putExtra("COURSE_NAME", "Introduction to Programming")
         courseInfoIntent.putExtra("COURSE_DESCRIPTION", "Learn the basics of programming using popular programming languages.")
