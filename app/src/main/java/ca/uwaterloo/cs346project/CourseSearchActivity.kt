@@ -50,6 +50,7 @@ class CourseSearchActivity : ComponentActivity() {
                     // TODO get from api
                     val dbHelper = UserDBHelper(LocalContext.current)
                     dbHelper.addCourse(Course("CS111", "Introduction to Programming", "Learn the basics of programming using popular programming languages."))
+                    dbHelper.addCourse(Course("CS240", "Data Structures and Data Management", "Introduction to widely used and effective methods of data organization, focusing on data structures, their algorithms, and the performance of these algorithms. Specific topics include priority queues, sorting, dictionaries, data structures for text processing. [Note: Enrolment is restricted; see Note 1 above. Lab is not scheduled and students are expected to find time in open hours to complete their work. Offered: F,W,S]"))
                     dbHelper.addCourse(Course("MATH135", "Algebra for Honours Mathematics", "An introduction to the language of mathematics and proof techniques through a study of the basic algebraic systems of mathematics: the integers, the integers modulo n, the rational numbers, the real numbers, the complex numbers and polynomials. [Offered: F,W,S]"))
 
                     SearchPage(currentlyLoggedInUser)
