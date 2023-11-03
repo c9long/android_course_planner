@@ -8,3 +8,6 @@ View all software releases [here.](https://git.uwaterloo.ca/dgrinton/cs346-proje
 ### v0.1
 - [Release Notes](https://git.uwaterloo.ca/dgrinton/cs346-project/-/blob/main/release/v0.1-release-notes.md)
 - [Installer](https://git.uwaterloo.ca/dgrinton/cs346-project/-/blob/main/release/v0.1-installer.apk)
+### v0.2
+- [Release Notes](https://git.uwaterloo.ca/dgrinton/cs346-project/-/blob/main/release/v0.2-release-notes.md)
+- [Installer](https://git.uwaterloo.ca/dgrinton/cs346-project/-/blob/main/release/v0.2-installer.apk)
