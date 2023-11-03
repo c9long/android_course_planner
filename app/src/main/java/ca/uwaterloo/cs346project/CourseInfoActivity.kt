@@ -39,7 +39,7 @@ import java.util.Date
 import java.util.Locale
 
 
-data class CourseReview(val reviewer: String, val date: String, val content: String, val stars: Int)
+data class CourseReview(val reviewer: String, val courseCode: String, val date: String, val content: String, val stars: Int)
 
 class CourseInfoActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -161,13 +161,13 @@ fun CourseInfoScreen(
                     onDismiss = { isDialogOpen = false },
                     onSubmitReview = { reviewContent, rating ->
                         val currentDate = SimpleDateFormat("MMMM dd, yyyy", Locale.US).format(Date())
-                        val newReview = CourseReview(currentlyLoggedInUser, currentDate, reviewContent, rating)
+                        val newReview = CourseReview(currentlyLoggedInUser, courseCode, currentDate, reviewContent, rating)
                         dbHelper.addReview(newReview)
                     }
                 )
             }
 
-            CourseReviews(dbHelper.getAllReviews())
+            CourseReviews(dbHelper.getAllReviewsFrom(courseCode))
 
             Box(
                 modifier = Modifier

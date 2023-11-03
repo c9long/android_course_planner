@@ -37,6 +37,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.ui.platform.LocalContext
 
+data class Course(val code: String, val name: String, val description: String)
+
 class CourseSearchActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +47,12 @@ class CourseSearchActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val currentlyLoggedInUser = intent.getStringExtra("CURRENT_USER") ?: ""
+                    // TODO get from api
+                    val dbHelper = UserDBHelper(LocalContext.current)
+                    dbHelper.addCourse(Course("CS111", "Introduction to Programming", "Learn the basics of programming using popular programming languages."))
+                    dbHelper.addCourse(Course("CS240", "Data Structures and Data Management", "Introduction to widely used and effective methods of data organization, focusing on data structures, their algorithms, and the performance of these algorithms. Specific topics include priority queues, sorting, dictionaries, data structures for text processing. [Note: Enrolment is restricted; see Note 1 above. Lab is not scheduled and students are expected to find time in open hours to complete their work. Offered: F,W,S]"))
+                    dbHelper.addCourse(Course("MATH135", "Algebra for Honours Mathematics", "An introduction to the language of mathematics and proof techniques through a study of the basic algebraic systems of mathematics: the integers, the integers modulo n, the rational numbers, the real numbers, the complex numbers and polynomials. [Offered: F,W,S]"))
+
                     SearchPage(currentlyLoggedInUser)
                 }
             }
@@ -57,7 +65,9 @@ class CourseSearchActivity : ComponentActivity() {
 fun SearchPage(currentlyLoggedInUser: String) {
     var userSearchText by remember { mutableStateOf("") } // Current string the user is searching for
     var courseSelected by remember { mutableStateOf(false) }
-    val courses: List<String> = listOf("CS111")
+    val dbHelper = UserDBHelper(LocalContext.current)
+    val courses by remember { mutableStateOf(dbHelper.getAllCourses())}
+    var select by remember { mutableStateOf(Course("", "", "")) }
 
     MaterialTheme (
         colorScheme = lightColorScheme(
@@ -100,10 +110,10 @@ fun SearchPage(currentlyLoggedInUser: String) {
 
                 // Search Suggestions
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    val filtered: List<String> = if (!userSearchText.isEmpty()) {
-                        val result = ArrayList<String>()
+                    val filtered: List<Course> = if (!userSearchText.isEmpty()) {
+                        val result = ArrayList<Course>()
                         for (course in courses) {
-                            if (course.lowercase().startsWith(userSearchText.lowercase())) {
+                            if (course.code.lowercase().startsWith(userSearchText.lowercase())) {
                                 result.add(course)
                             }
                         }
@@ -113,12 +123,15 @@ fun SearchPage(currentlyLoggedInUser: String) {
                     items(filtered) { selected ->
                         Row(
                             modifier = Modifier
-                                .clickable(onClick = { courseSelected = true })
+                                .clickable(onClick = {
+                                    select = selected
+                                    courseSelected = true
+                                })
                                 .background(Color.LightGray)
                                 .fillMaxWidth()
                                 .padding(PaddingValues(12.dp, 16.dp))
                         ) {
-                            Text(text = selected, fontSize = 18.sp, color = Color.Black)
+                            Text(text = selected.code, fontSize = 18.sp, color = Color.Black)
                         }
                     }
                 }
@@ -127,21 +140,21 @@ fun SearchPage(currentlyLoggedInUser: String) {
     }
 
     if (courseSelected) {
-        // TODO Un-hardcode this
         val context = LocalContext.current
         val courseInfoIntent = Intent(context, CourseInfoActivity::class.java)
 
         // Pass relevant course information using intent extras
         courseInfoIntent.putExtra("CURRENT_USER", currentlyLoggedInUser)
-        courseInfoIntent.putExtra("COURSE_CODE", "CS 111")
-        courseInfoIntent.putExtra("COURSE_NAME", "Introduction to Programming")
-        courseInfoIntent.putExtra("COURSE_DESCRIPTION", "Learn the basics of programming using popular programming languages.")
+        courseInfoIntent.putExtra("COURSE_CODE", select.code)
+        courseInfoIntent.putExtra("COURSE_NAME", select.name)
+        courseInfoIntent.putExtra("COURSE_DESCRIPTION", select.description)
         courseInfoIntent.putExtra("INSTRUCTOR_NAME", "John Doe")
         courseInfoIntent.putExtra("COURSE_OFFERING", arrayListOf("Monday 10:00 AM - 12:00 PM",
             "Wednesday 2:00 PM - 4:00 PM",
             "Friday 10:00 AM - 12:00 PM")
         )
 
+        courseSelected = false
         context.startActivity(courseInfoIntent)
     }
 }
