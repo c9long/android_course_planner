@@ -47,6 +47,11 @@ class CourseSearchActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val currentlyLoggedInUser = intent.getStringExtra("CURRENT_USER") ?: ""
+                    // TODO get from api
+                    val dbHelper = UserDBHelper(LocalContext.current)
+                    dbHelper.addCourse(Course("CS111", "Introduction to Programming", "Learn the basics of programming using popular programming languages."))
+                    dbHelper.addCourse(Course("MATH135", "Algebra for Honours Mathematics", "An introduction to the language of mathematics and proof techniques through a study of the basic algebraic systems of mathematics: the integers, the integers modulo n, the rational numbers, the real numbers, the complex numbers and polynomials. [Offered: F,W,S]"))
+
                     SearchPage(currentlyLoggedInUser)
                 }
             }
@@ -134,7 +139,6 @@ fun SearchPage(currentlyLoggedInUser: String) {
     }
 
     if (courseSelected) {
-        // TODO Un-hardcode this
         val context = LocalContext.current
         val courseInfoIntent = Intent(context, CourseInfoActivity::class.java)
 
