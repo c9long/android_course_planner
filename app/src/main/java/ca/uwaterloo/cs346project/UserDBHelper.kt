@@ -23,6 +23,10 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         private const val COLUMN_CONTENT = "content"
         private const val COLUMN_RATING = "rating"
 
+        private const val TABLE_COURSES = "uw_courses"
+        private const val COLUMN_COURSE_CODE = "course_code"
+        private const val COLUMN_COURSE_NAME = "course_name"
+        private const val COLUMN_COURSE_DESC = "course_description"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -39,13 +43,20 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
                 "$COLUMN_RATING INTEGER," +
                 "FOREIGN KEY($COLUMN_USER_ID) REFERENCES $TABLE_USERS($COLUMN_ID))"
 
+        val createCourseTable = "CREATE TABLE $TABLE_COURSES (" +
+                "$COLUMN_COURSE_CODE TEXT PRIMARY KEY," +
+                "$COLUMN_COURSE_NAME TEXT," +
+                "$COLUMN_COURSE_DESC TEXT)"
+
         db.execSQL(createTableStatement)
         db.execSQL(createReviewsTableStatement)
+        db.execSQL(createCourseTable)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         db.execSQL("DROP TABLE IF EXISTS $TABLE_USERS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_COURSE_REVIEWS")
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_COURSES")
         onCreate(db)
     }
 
@@ -180,6 +191,20 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         db.close()
 
         return reviews
+    }
+
+    fun addCourse(course: Course): Boolean {
+        val db = this.writableDatabase
+
+        val value = ContentValues().apply {
+            put(COLUMN_COURSE_CODE, course.code)
+            put(COLUMN_COURSE_NAME, course.name)
+            put(COLUMN_COURSE_DESC, course.description)
+        }
+
+        val result = db.insert(TABLE_COURSES, null, value)
+        db.close()
+        return result != -1L
     }
 }
 
