@@ -52,7 +52,10 @@ fun LoginPage() {
     var SignUp by remember { mutableStateOf(false) }
 
     val dbHelper = UserDBHelper(LocalContext.current)
+    val database = dbHelper.readableDatabase
     var errorMessage by remember { mutableStateOf("") }
+
+
 
     Column(
         modifier = Modifier
