@@ -206,6 +206,27 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         db.close()
         return result != -1L
     }
+
+    fun getAllCourses(): List<Course> {
+        val db = this.readableDatabase
+        val cursor = db.query(
+            TABLE_COURSES,
+            arrayOf(COLUMN_COURSE_CODE, COLUMN_COURSE_NAME, COLUMN_COURSE_DESC),
+            "",
+            arrayOf(),
+            null, null, null
+        )
+
+        // Add courses to list
+        val ret: MutableList<Course> = mutableListOf()
+        while (cursor.moveToNext()) {
+            ret.add(Course(cursor.getString(0), cursor.getString(1), cursor.getString(2)))
+        }
+
+        cursor.close()
+        db.close()
+        return ret
+    }
 }
 
 
