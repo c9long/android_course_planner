@@ -38,10 +38,12 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         val createReviewsTableStatement = "CREATE TABLE $TABLE_COURSE_REVIEWS (" +
                 "$COLUMN_REVIEW_ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "$COLUMN_USER_ID INTEGER," +
+                "$COLUMN_COURSE_CODE TEXT, " +
                 "$COLUMN_REVIEW_DATE TEXT, " +
                 "$COLUMN_CONTENT TEXT, " +
                 "$COLUMN_RATING INTEGER," +
-                "FOREIGN KEY($COLUMN_USER_ID) REFERENCES $TABLE_USERS($COLUMN_ID))"
+                "FOREIGN KEY($COLUMN_USER_ID) REFERENCES $TABLE_USERS($COLUMN_ID)," +
+                "FOREIGN KEY($COLUMN_COURSE_CODE) REFERENCES $TABLE_COURSES($COLUMN_COURSE_CODE))"
 
         val createCourseTable = "CREATE TABLE $TABLE_COURSES (" +
                 "$COLUMN_COURSE_CODE TEXT PRIMARY KEY," +
@@ -127,6 +129,7 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         if (userId != -1) {
             val values = ContentValues().apply {
                 put(COLUMN_USER_ID, userId)
+                put(COLUMN_COURSE_CODE, courseReview.courseCode)
                 put(COLUMN_REVIEW_DATE, courseReview.date)
                 put(COLUMN_CONTENT, courseReview.content)
                 put(COLUMN_RATING, courseReview.stars)
@@ -154,6 +157,7 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
             if (cursor.count > 0) {
                 // Query to retrieve all reviews with their corresponding usernames
                 val query = "SELECT $TABLE_COURSE_REVIEWS.$COLUMN_REVIEW_DATE, " +
+                        "$TABLE_COURSE_REVIEWS.$COLUMN_COURSE_CODE, " +
                         "$TABLE_COURSE_REVIEWS.$COLUMN_CONTENT, " +
                         "$TABLE_COURSE_REVIEWS.$COLUMN_RATING, " +
                         "$TABLE_USERS.$COLUMN_USERNAME " +
@@ -167,19 +171,21 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
                 if (reviewCursor != null) {
                     while (reviewCursor.moveToNext()) {
                         val usernameCol = reviewCursor.getColumnIndex(COLUMN_USERNAME)
+                        val codeCol = reviewCursor.getColumnIndex(COLUMN_COURSE_CODE)
                         val reviewDateCol = reviewCursor.getColumnIndex(COLUMN_REVIEW_DATE)
                         val contentCol = reviewCursor.getColumnIndex(COLUMN_CONTENT)
                         val ratingCol = reviewCursor.getColumnIndex(COLUMN_RATING)
-                        if (reviewDateCol == -1 || contentCol == -1 || ratingCol == -1 || usernameCol == -1) {
+                        if (reviewDateCol == -1 || codeCol == -1 || contentCol == -1 || ratingCol == -1 || usernameCol == -1) {
                             break
                         }
                         val username = reviewCursor.getString(usernameCol)
+                        val courseCode = reviewCursor.getString(codeCol)
                         val reviewDate = reviewCursor.getString(reviewDateCol)
                         val content = reviewCursor.getString(contentCol)
                         val rating = reviewCursor.getInt(ratingCol)
 
                         // Create a CourseReview object and add it to the list
-                        val review = CourseReview(username, reviewDate, content, rating)
+                        val review = CourseReview(username, courseCode, reviewDate, content, rating)
                         reviews.add(review)
                     }
                 }
@@ -191,6 +197,40 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         db.close()
 
         return reviews
+    }
+
+    fun getAllReviewsFrom(courseCode: String): List<CourseReview> {
+        val db = this.readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT $COLUMN_USERNAME, $COLUMN_REVIEW_DATE, $COLUMN_CONTENT, $COLUMN_RATING " +
+                "FROM $TABLE_COURSE_REVIEWS INNER JOIN $TABLE_USERS " +
+                "ON $TABLE_COURSE_REVIEWS.$COLUMN_USER_ID = $TABLE_USERS.$COLUMN_ID " +
+                "WHERE $COLUMN_COURSE_CODE = '" + courseCode + "' " +
+                "ORDER BY $TABLE_COURSE_REVIEWS.$COLUMN_RATING DESC", null)
+
+        // Add courses to list
+        val ret: MutableList<CourseReview> = mutableListOf()
+        while (cursor.moveToNext()) {
+            val usernameCol = cursor.getColumnIndex(COLUMN_USERNAME)
+            val reviewDateCol = cursor.getColumnIndex(COLUMN_REVIEW_DATE)
+            val contentCol = cursor.getColumnIndex(COLUMN_CONTENT)
+            val ratingCol = cursor.getColumnIndex(COLUMN_RATING)
+            if (reviewDateCol == -1 || contentCol == -1 || ratingCol == -1 || usernameCol == -1) {
+                break
+            }
+            val username = cursor.getString(usernameCol)
+            val reviewDate = cursor.getString(reviewDateCol)
+            val content = cursor.getString(contentCol)
+            val rating = cursor.getInt(ratingCol)
+
+            // Create a CourseReview object and add it to the list
+            val review = CourseReview(username, courseCode, reviewDate, content, rating)
+            ret.add(review)
+        }
+
+        cursor.close()
+        db.close()
+        return ret
     }
 
     fun addCourse(course: Course): Boolean {
