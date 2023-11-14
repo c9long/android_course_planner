@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"
+                     tools:ignore="ScopedStorage"/>
+
 
     <application
         android:allowBackup="true"
@@ -68,6 +72,14 @@
                   android:theme="@style/Theme.Cs346project">
             <intent-filter>
                 <action android:name="com.example.action.SIGNUP" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".CourseMaterial"
+                  android:exported="true"
+                  android:theme="@style/Theme.Cs346project">
+            <intent-filter>
+                <action android:name="com.example.action.CourseMaterial" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
