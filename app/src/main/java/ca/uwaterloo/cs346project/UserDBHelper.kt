@@ -4,8 +4,9 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 
-data class FileRecord(val id: Int, val name: String)
+data class FileRecord(var id: Int, var name: String, var uri: String)
 
 class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
@@ -288,14 +289,13 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         val db = this.writableDatabase
         val values = ContentValues().apply {
             put(COLUMN_FILE_NAME, fileName)
-            put(COLUMN_FILE_URI, fileUri)
+            put(COLUMN_FILE_URI, fileUri) // Store the URI
         }
 
         val result = db.insert(TABLE_FILES, null, values)
         db.close()
         return result != -1L
     }
-
 
     fun deleteFile(fileId: Int): Boolean {
         val db = this.writableDatabase
@@ -313,7 +313,8 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
             do {
                 val fileId = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_FILE_ID))
                 val fileName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FILE_NAME))
-                fileList.add(FileRecord(fileId, fileName))
+                val fileUri = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FILE_URI)) // Retrieve the URI
+                fileList.add(FileRecord(fileId, fileName, fileUri)) // Include the URI in the FileRecord
             } while (cursor.moveToNext())
         }
         cursor.close()
@@ -330,5 +331,4 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         db.close()
         return result > 0
     }
-
 }

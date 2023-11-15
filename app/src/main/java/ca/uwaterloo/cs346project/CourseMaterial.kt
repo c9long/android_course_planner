@@ -1,8 +1,14 @@
 package ca.uwaterloo.cs346project
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -19,9 +25,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
-
 
 
 class CourseMaterial : ComponentActivity() {
@@ -31,17 +38,33 @@ class CourseMaterial : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val userDBHelper = UserDBHelper(this)
 
-        filePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            uri?.let {
-                // Assuming you have the file name and URI here
-                val fileName = "Your file name" // You need to get or set the file name
-                val fileUri = it.toString()
+        fun getFileNameFromUri(uri: Uri): String {
+            var name = "New file" // Default name if original name can't be found
+            val cursor = contentResolver.query(uri, null, null, null, null)
 
-                // Store in database
-                userDBHelper.addFile(fileName, fileUri)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    // Get the column index of MediaStore.Images.Media.DISPLAY_NAME
+                    val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (nameIndex >= 0) {
+                        name = it.getString(nameIndex)
+                    }
+                }
             }
+
+            return name
         }
 
+
+        filePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                val fileName = getFileNameFromUri(it)
+                userDBHelper.addFile(fileName, it.toString())
+                val intent = intent
+                finish()
+                startActivity(intent)
+            }
+        }
 
         setContent {
             Cs346projectTheme {
@@ -53,6 +76,8 @@ class CourseMaterial : ComponentActivity() {
                 }
             }
         }
+
+
     }
 }
 
@@ -61,7 +86,7 @@ class CourseMaterial : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityResultLauncher<String>) {
-    var fileList by remember { mutableStateOf(listOf<FileRecord>()) } // Change to FileRecord list
+    var fileList by remember { mutableStateOf(listOf<FileRecord>()) }
     var selectedFileForRename by remember { mutableStateOf<FileRecord?>(null) }
     var fileToDelete by remember { mutableStateOf<FileRecord?>(null) }
     val scrollState = rememberScrollState()
@@ -73,11 +98,8 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                //val newFileName = "New File ${fileList.size + 1}"
-                //if (userDBHelper.addFile(newFileName)) {
-                //    fileList = userDBHelper.getAllFiles() // Update list after adding a file
-                //}
                 filePickerLauncher.launch("application/pdf")
+                //.launch("application/pdf")
             }) {
                 Icon(Icons.Default.Add, "Add")
             }
@@ -91,6 +113,8 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
             fileList.forEach { file ->
                 FileFolderItem(
                     fileName = file.name,
+                    fileUri = file.uri,
+                    //onOpen = { openPdfFile(context, file.uri) },
                     onDelete = { fileToDelete = file },
                     onRename = { selectedFileForRename = file }
                 )
@@ -115,7 +139,7 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
         AlertDialog(
             onDismissRequest = { fileToDelete = null },
             title = { Text("Confirm Delete") },
-            text = { Text("Are you sure you want to delete \"$fileToDelete\"?") },
+            text = { Text("Are you sure you want to delete \"${fileToDelete?.name}\"?")  },
             confirmButton = {
                 TextButton(onClick = {
                     if (userDBHelper.deleteFile(fileToDelete!!.id)) {
@@ -136,18 +160,25 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
 }
 
 @Composable
-fun FileFolderItem(fileName: String, onDelete: () -> Unit, onRename: () -> Unit) {
+fun FileFolderItem(fileName: String,
+                   fileUri: String, // Add this to pass the URI of the file
+                   //onOpen: (string) -> Unit,
+                   onDelete: () -> Unit,
+                   onRename: () -> Unit) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth()
+
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .clickable { /* deal open operation*/ }
+                .clickable(onClick = {openPdfFile(context, fileUri)})
+                //.clickable { /* deal open operation*/ }
         ) {
             Text(text = fileName, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.weight(1f))
@@ -191,4 +222,39 @@ fun RenameFileDialog(initialName: String, onRename: (String) -> Unit, onDismiss:
             }
         }
     )
+}
+
+
+fun isFileAccessible(context: Context, fileUri: Uri): Boolean {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(fileUri)
+        inputStream?.close()
+        true
+    } catch (e: Exception) {
+        Log.e("FileAccess", "Unable to access file at URI: $fileUri", e)
+        false
+    }
+}
+
+
+
+fun openPdfFile(context: Context, fileUriString: String) {
+    val fileUri = Uri.parse(fileUriString)
+
+    if (!isFileAccessible(context, fileUri)) {
+        Toast.makeText(context, "File is not accessible", Toast.LENGTH_SHORT).show()
+        return
+    }
+
+    try {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(fileUri, "application/pdf")
+            flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+        }
+        context.startActivity(intent)
+
+    } catch (e: Exception) {
+        Log.e("openPdfFile", "Error opening file: $fileUriString", e)
+        Toast.makeText(context, "No application found to open PDF", Toast.LENGTH_SHORT).show()
+    }
 }
