@@ -3,9 +3,9 @@ package ca.uwaterloo.cs346project
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Toast
@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
+import java.io.File
 
 
 class CourseMaterial : ComponentActivity() {
@@ -58,6 +59,14 @@ class CourseMaterial : ComponentActivity() {
 
         filePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
+                //val fileName = getFileNameFromUri(it)
+                //userDBHelper.addFile(fileName, it.toString())
+                //val intent = intent
+                //finish()
+                //startActivity(intent)
+                val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                contentResolver.takePersistableUriPermission(it, flags)
+
                 val fileName = getFileNameFromUri(it)
                 userDBHelper.addFile(fileName, it.toString())
                 val intent = intent
@@ -162,7 +171,7 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
 @Composable
 fun FileFolderItem(fileName: String,
                    fileUri: String, // Add this to pass the URI of the file
-                   //onOpen: (string) -> Unit,
+    //onOpen: (string) -> Unit,
                    onDelete: () -> Unit,
                    onRename: () -> Unit) {
     val context = LocalContext.current
@@ -177,8 +186,8 @@ fun FileFolderItem(fileName: String,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .clickable(onClick = {openPdfFile(context, fileUri)})
-                //.clickable { /* deal open operation*/ }
+                .clickable(onClick = { openPdfFile(context, fileUri) })
+            //.clickable { /* deal open operation*/ }
         ) {
             Text(text = fileName, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.weight(1f))
@@ -225,36 +234,64 @@ fun RenameFileDialog(initialName: String, onRename: (String) -> Unit, onDismiss:
 }
 
 
-fun isFileAccessible(context: Context, fileUri: Uri): Boolean {
-    return try {
-        val inputStream = context.contentResolver.openInputStream(fileUri)
-        inputStream?.close()
-        true
-    } catch (e: Exception) {
-        Log.e("FileAccess", "Unable to access file at URI: $fileUri", e)
-        false
-    }
-}
+//fun isFileAccessible(context: Context, fileUri: Uri): Boolean {
+//    return try {
+//        val inputStream = context.contentResolver.openInputStream(fileUri)
+//        inputStream?.close()
+//        true
+//    } catch (e: Exception) {
+//        Log.e("FileAccess", "Unable to access file at URI: $fileUri", e)
+//        false
+//    }
+//}
+
+//fun isFileAccessible(context: Context, fileUriString: String): Boolean {
+//    val fileUri = Uri.parse(fileUriString)
+//    return try {
+//        //获取外部文件访问路径
+//        val externalPubPath = Environment.getExternalStorageDirectory()
+//        val picPath = File(externalPubPath, fileUri.path!!.split(":")[1])
+//        if (picPath.exists()) {
+//            val intent = Intent(Intent.ACTION_VIEW).apply {
+//                setDataAndType(Uri.fromFile(picPath), "application/pdf")
+//                flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+//            }
+//            ContextCompat.startActivity(context, intent, null)
+//        }
+//        picPath.exists()
+//    } catch (e: Exception) {
+//        Log.e("FileAccess", "Unable to access file at URI: $fileUri", e)
+//        false
+//    }
+//}
 
 
 
 fun openPdfFile(context: Context, fileUriString: String) {
     val fileUri = Uri.parse(fileUriString)
 
-    if (!isFileAccessible(context, fileUri)) {
-        Toast.makeText(context, "File is not accessible", Toast.LENGTH_SHORT).show()
-        return
-    }
+
+
+
+    //if (!isFileAccessible(context, fileUri)) {
+    //    Toast.makeText(context, "File is not accessible", Toast.LENGTH_SHORT).show()
+    //    return
+    //}
 
     try {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(fileUri, "application/pdf")
-            flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+            //flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+            addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+            //addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            //addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(intent)
+        //ContextCompat.startActivity(context, intent, null)
 
     } catch (e: Exception) {
         Log.e("openPdfFile", "Error opening file: $fileUriString", e)
         Toast.makeText(context, "No application found to open PDF", Toast.LENGTH_SHORT).show()
     }
 }
+
