@@ -5,29 +5,41 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -35,6 +47,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 import kotlin.math.roundToInt
 
 
@@ -46,7 +59,7 @@ data class Event(
     val description: String? = null,
 )
 
-val EventTimeFormatter = DateTimeFormatter.ofPattern("h:mm a")
+val EventTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 @Composable
 fun BasicEvent(
     event: Event,
@@ -81,47 +94,55 @@ fun BasicEvent(
     }
 }
 
-private val sampleEvents = listOf(
+@Composable
+fun CreateEventList (
+    currentUser: String,
+) {
+    val dbHelper = UserDBHelper(LocalContext.current)
+
+}
+
+private val sampleEvents = mutableListOf(
     Event(
         name = "CS 111",
         color = Color(0xFFAFBBF2),
-        start = LocalDateTime.parse("2021-05-18T13:00:00"),
-        end = LocalDateTime.parse("2021-05-18T15:00:00"),
+        start = LocalDateTime.parse("2023-05-14T13:00:00"),
+        end = LocalDateTime.parse("2023-05-14T15:00:00"),
         description = "An arbitrary CS course placeholder description.",
     ),
     Event(
         name = "CS 112",
         color = Color(0xFFAFBBF2),
-        start = LocalDateTime.parse("2021-05-18T15:15:00"),
-        end = LocalDateTime.parse("2021-05-18T16:00:00"),
+        start = LocalDateTime.parse("2023-05-14T15:15:00"),
+        end = LocalDateTime.parse("2023-05-14T16:00:00"),
         description = "An arbitrary CS course placeholder description.",
     ),
     Event(
         name = "CS 121",
         color = Color(0xFF1B998B),
-        start = LocalDateTime.parse("2021-05-18T16:50:00"),
-        end = LocalDateTime.parse("2021-05-18T18:00:00"),
+        start = LocalDateTime.parse("2023-05-14T16:50:00"),
+        end = LocalDateTime.parse("2023-05-14T18:00:00"),
         description = "An arbitrary CS course placeholder description.",
     ),
     Event(
         name = "CS 122",
         color = Color(0xFFF4BFDB),
-        start = LocalDateTime.parse("2021-05-19T09:30:00"),
-        end = LocalDateTime.parse("2021-05-19T11:00:00"),
+        start = LocalDateTime.parse("2023-05-15T09:30:00"),
+        end = LocalDateTime.parse("2023-05-15T11:00:00"),
         description = "An arbitrary CS course placeholder description.",
     ),
     Event(
         name = "CS 135",
         color = Color(0xFF6DD3CE),
-        start = LocalDateTime.parse("2021-05-19T11:00:00"),
-        end = LocalDateTime.parse("2021-05-19T12:15:00"),
+        start = LocalDateTime.parse("2023-05-16T11:00:00"),
+        end = LocalDateTime.parse("2023-05-16T12:15:00"),
         description = "An arbitrary CS course placeholder description.",
     ),
     Event(
         name = "CS 136",
         color = Color(0xFF1B998B),
-        start = LocalDateTime.parse("2021-05-20T12:00:00"),
-        end = LocalDateTime.parse("2021-05-20T13:50:00"),
+        start = LocalDateTime.parse("2023-05-20T12:00:00"),
+        end = LocalDateTime.parse("2023-05-20T13:50:00"),
         description = "An arbitrary CS course placeholder description.",
     ),
 )
@@ -199,8 +220,9 @@ fun BasicDayHeader(
     day: LocalDate,
     modifier: Modifier = Modifier,
 ) {
+    val formatter = DateTimeFormatter.ofPattern("EEEE", Locale.ENGLISH)
     Text(
-        text = day.format(ISO_LOCAL_DATE),
+        text = day.format(formatter),
         textAlign = TextAlign.Center,
         modifier = modifier
             .fillMaxWidth()
@@ -224,7 +246,8 @@ fun ScheduleHeader(
     dayHeader: @Composable (day: LocalDate) -> Unit = { BasicDayHeader(day = it) },
 ) {
     Row(modifier = modifier) {
-        val numDays = ChronoUnit.DAYS.between(minDate, maxDate).toInt() + 1
+        val numDays = 7
+            //ChronoUnit.DAYS.between(minDate, maxDate).toInt() + 1
         repeat(numDays) { i ->
             Box(modifier = Modifier.width(dayWidth)) {
                 dayHeader(minDate.plusDays(i.toLong()))
@@ -234,6 +257,7 @@ fun ScheduleHeader(
 }
 
 @Composable
+@Preview
 fun ScheduleHeaderPreview() {
     Cs346projectTheme {
         ScheduleHeader(

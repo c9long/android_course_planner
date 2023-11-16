@@ -32,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
 import java.text.SimpleDateFormat
@@ -90,6 +91,8 @@ fun CourseInfoScreen(
     courseOfferings: List<String>,
     onBackButtonClick: () -> Unit,
 ) {
+    var showToast by remember { mutableStateOf(false) }
+
     MaterialTheme (
         typography = Typography(),
         shapes = Shapes()
@@ -167,6 +170,18 @@ fun CourseInfoScreen(
                 )
             }
 
+            AddCourseButton {
+                // Set the state to show the toast
+                showToast = true
+            }
+
+            if (showToast) {
+                Toast("Course added!") {
+                    // Dismiss the toast when clicked
+                    showToast = false
+                }
+            }
+
             CourseReviews(dbHelper.getAllReviewsFrom(courseCode))
 
             Box(
@@ -183,6 +198,35 @@ fun CourseInfoScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AddCourseButton(onClick: () -> Unit) {
+    // Material Design button that triggers the custom toast when clicked
+    Button(
+        onClick = {
+            // Call the provided onClick function
+            onClick()
+        },
+        modifier = Modifier
+            .padding(16.dp)
+    ) {
+        Text("Add course offering to calendar")
+    }
+}
+@Composable
+fun Toast(message: String, onDismiss: () -> Unit) {
+    // A custom toast-like composable
+    Card(
+        modifier = Modifier
+            .padding(16.dp)
+            .clickable {
+                // Call the onDismiss function when the toast is clicked
+                onDismiss()
+            }
+    ) {
+        Text(message, modifier = Modifier.padding(16.dp))
     }
 }
 

@@ -27,6 +27,12 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         private const val COLUMN_COURSE_CODE = "course_code"
         private const val COLUMN_COURSE_NAME = "course_name"
         private const val COLUMN_COURSE_DESC = "course_description"
+
+        private const val TABLE_ENROLLMENTS = "enrollments"
+        private const val COLUMN_ENROLLMENT_START = "enrollment_start"
+        private const val COLUMN_ENROLLMENT_END = "enrollment_end"
+        private const val COLUMN_ENROLLMENT_CODE = "enrollment_code"
+        private const val COLUMN_ENROLLMENT_DESC = "enrollment_description"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -50,9 +56,18 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
                 "$COLUMN_COURSE_NAME TEXT," +
                 "$COLUMN_COURSE_DESC TEXT)"
 
+        val createEnrollmentTable = "CREATE TABLE $TABLE_ENROLLMENTS (" +
+                "$COLUMN_ENROLLMENT_CODE TEXT," +
+                "$COLUMN_ENROLLMENT_DESC TEXT," +
+                "$COLUMN_ENROLLMENT_START TEXT," +
+                "$COLUMN_ENROLLMENT_END TEXT," +
+                "FOREIGN KEY($COLUMN_ENROLLMENT_CODE) REFERENCES $TABLE_COURSES($COLUMN_COURSE_CODE)," +
+                "FOREIGN KEY($COLUMN_ENROLLMENT_DESC) REFERENCES $TABLE_COURSES($COLUMN_COURSE_DESC))"
+
         db.execSQL(createTableStatement)
         db.execSQL(createReviewsTableStatement)
         db.execSQL(createCourseTable)
+        db.execSQL(createEnrollmentTable)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -266,6 +281,11 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         cursor.close()
         db.close()
         return ret
+    }
+
+    fun getAllEnrollments(currentUser: String): List<Event> {
+        val db = this.readableDatabase
+        return emptyList();
     }
 }
 
