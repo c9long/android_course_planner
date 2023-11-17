@@ -13,10 +13,11 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
-data class CourseTitle(val code: String, val title: String)
+data class Course(val code: String, val title: String, val description: String)
+data class CourseSchedule(val section: String, val enrollment: Int, val maxEnrollment: Int, val meetStart: String, val meetEnd: String, val meetDays: String)
 
 object CourseList: ViewModel() {
-    private val courseCodes: MutableList<CourseTitle> = mutableListOf()
+    private val courseCodes: MutableList<Course> = mutableListOf()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -25,15 +26,16 @@ object CourseList: ViewModel() {
                 for (i in 0 until courseData.length()) {
                     val element = courseData.getJSONObject(i)
                     courseCodes.add(
-                        CourseTitle(element.getString("subjectCode") + element.getString("catalogNumber"),
-                            element.getString("title"))
+                        Course(element.getString("subjectCode") + element.getString("catalogNumber"),
+                            element.getString("title"),
+                            element.getString("description"))
                     )
                 }
             }
         }
     }
 
-    fun get(): List<CourseTitle> {
+    fun get(): List<Course> {
         return courseCodes
     }
 }
@@ -93,11 +95,28 @@ object UWAPIHelper: ViewModel() {
     /// Wrapper Methods (Public)
     ///
 
-    fun getCourseData(courseCode: String): String {
+    fun getCourseScheduleData(courseCode: String): List<CourseSchedule> {
         val numStart: Int = courseCode.toCharArray().indexOfFirst { c -> c.isDigit() }
         val catalogNum: String = courseCode.drop(numStart)
         val subject: String = courseCode.removeSuffix(catalogNum)
-        return apiGet("/v3/Courses/$curTerm/$subject/$catalogNum")
+
+        val jsonArr = JSONArray(apiGet("/v3/ClassSchedules/$curTerm/$subject/$catalogNum"))
+        val list: MutableList<CourseSchedule> = mutableListOf()
+
+        for (i in 0 until jsonArr.length()) {
+            val jsonObject = jsonArr.getJSONObject(i)
+            val scheduleObject = jsonObject.getJSONArray("scheduleData").getJSONObject(0)
+            list.add(CourseSchedule(
+                jsonObject.getString("courseComponent") + " " + jsonObject.getInt("classSection").toString().padStart(3, '0'),
+                jsonObject.getInt("enrolledStudents"),
+                jsonObject.getInt("maxEnrollmentCapacity"),
+                scheduleObject.getString("classMeetingStartTime"),
+                scheduleObject.getString("classMeetingEndTime"),
+                scheduleObject.getString("classMeetingDayPatternCode")
+            ))
+        }
+
+        return list.sortedBy { it.section }
     }
 
 }

@@ -37,8 +37,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.ui.platform.LocalContext
 
-data class Course(val code: String, val name: String, val description: String)
-
 class CourseSearchActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +65,7 @@ fun SearchPage(currentlyLoggedInUser: String) {
     var courseSelected by remember { mutableStateOf(false) }
     val dbHelper = UserDBHelper(LocalContext.current)
     val courses by remember { mutableStateOf(CourseList.get())}
-    var select by remember { mutableStateOf(CourseTitle("", "")) }
+    var select by remember { mutableStateOf(Course("", "", "")) }
 
     MaterialTheme (
         colorScheme = lightColorScheme(
@@ -110,8 +108,8 @@ fun SearchPage(currentlyLoggedInUser: String) {
 
                 // Search Suggestions
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    val filtered: List<CourseTitle> = if (!userSearchText.isEmpty()) {
-                        val result = ArrayList<CourseTitle>()
+                    val filtered: List<Course> = if (!userSearchText.isEmpty()) {
+                        val result = ArrayList<Course>()
                         for (course in courses) {
                             if (course.code.lowercase().startsWith(userSearchText.lowercase())) {
                                 result.add(course)
@@ -147,8 +145,8 @@ fun SearchPage(currentlyLoggedInUser: String) {
         courseInfoIntent.putExtra("CURRENT_USER", currentlyLoggedInUser)
         courseInfoIntent.putExtra("COURSE_CODE", select.code)
         courseInfoIntent.putExtra("COURSE_NAME", select.title)
-        courseInfoIntent.putExtra("COURSE_DESCRIPTION", "")
-        courseInfoIntent.putExtra("INSTRUCTOR_NAME", "John Doe")
+        courseInfoIntent.putExtra("COURSE_DESCRIPTION", select.description)
+        courseInfoIntent.putExtra("INSTRUCTOR_NAME", "")
         courseInfoIntent.putExtra("COURSE_OFFERING", arrayListOf("Monday 10:00 AM - 12:00 PM",
             "Wednesday 2:00 PM - 4:00 PM",
             "Friday 10:00 AM - 12:00 PM")

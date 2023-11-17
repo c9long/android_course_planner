@@ -238,7 +238,7 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
 
         val value = ContentValues().apply {
             put(COLUMN_COURSE_CODE, course.code)
-            put(COLUMN_COURSE_NAME, course.name)
+            put(COLUMN_COURSE_NAME, course.title)
             put(COLUMN_COURSE_DESC, course.description)
         }
 
