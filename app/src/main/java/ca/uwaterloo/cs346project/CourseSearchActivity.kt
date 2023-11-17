@@ -66,7 +66,7 @@ fun SearchPage(currentlyLoggedInUser: String) {
     var userSearchText by remember { mutableStateOf("") } // Current string the user is searching for
     var courseSelected by remember { mutableStateOf(false) }
     val dbHelper = UserDBHelper(LocalContext.current)
-    val courses by remember { mutableStateOf(dbHelper.getAllCourses())}
+    val courses by remember { mutableStateOf(CourseList.get())}
     var select by remember { mutableStateOf(Course("", "", "")) }
 
     MaterialTheme (
@@ -110,10 +110,10 @@ fun SearchPage(currentlyLoggedInUser: String) {
 
                 // Search Suggestions
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    val filtered: List<Course> = if (!userSearchText.isEmpty()) {
-                        val result = ArrayList<Course>()
+                    val filtered: List<String> = if (!userSearchText.isEmpty()) {
+                        val result = ArrayList<String>()
                         for (course in courses) {
-                            if (course.code.lowercase().startsWith(userSearchText.lowercase())) {
+                            if (course.lowercase().startsWith(userSearchText.lowercase())) {
                                 result.add(course)
                             }
                         }
@@ -124,14 +124,14 @@ fun SearchPage(currentlyLoggedInUser: String) {
                         Row(
                             modifier = Modifier
                                 .clickable(onClick = {
-                                    select = selected
+                                    select = Course(selected, "", "")
                                     courseSelected = true
                                 })
                                 .background(Color.LightGray)
                                 .fillMaxWidth()
                                 .padding(PaddingValues(12.dp, 16.dp))
                         ) {
-                            Text(text = selected.code, fontSize = 18.sp, color = Color.Black)
+                            Text(text = selected, fontSize = 18.sp, color = Color.Black)
                         }
                     }
                 }
