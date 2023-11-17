@@ -41,6 +41,8 @@ import java.util.Locale
 
 data class CourseReview(val reviewer: String, val courseCode: String, val date: String, val content: String, val stars: Int)
 
+val noOfferings: String = "Course not offered this term."
+
 class CourseInfoActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,7 +59,12 @@ class CourseInfoActivity : ComponentActivity() {
                     val courseDescription = intent.getStringExtra("COURSE_DESCRIPTION") ?: ""
                     val instructorName = intent.getStringExtra("INSTRUCTOR_NAME") ?: ""
                     //val courseOfferings = intent.getStringArrayListExtra("COURSE_OFFERING") ?: emptyList()
-                    val courseOfferings = UWAPIHelper.getCourseScheduleData(courseCode)
+                    var courseOfferings: List<CourseSchedule>
+                    try {
+                        courseOfferings = UWAPIHelper.getCourseScheduleData(courseCode)
+                    } catch (e: Exception) {
+                        courseOfferings = listOf(CourseSchedule(noOfferings, 0, 0, "", "", ""))
+                    }
 
                     CourseInfoScreen(
                         currentlyLoggedInUser, courseCode, courseName, courseDescription, instructorName,
@@ -122,6 +129,12 @@ fun CourseInfoScreen(
             )
 
             courseOfferings.forEachIndexed { index, offering ->
+                val text: String
+                if (offering.section == noOfferings) {
+                    text = noOfferings
+                } else {
+                    text = "Enrollment: ${offering.enrollment} / ${offering.maxEnrollment}, \t ${offering.meetDays}: ${offering.meetStart.substring(11, 16)} - ${offering.meetEnd.substring(11, 16)}"
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -130,7 +143,7 @@ fun CourseInfoScreen(
                 ) {
                     Text(text = offering.section, style = MaterialTheme.typography.bodySmall)
                     Text(
-                        text = "Enrollment: ${offering.enrollment} / ${offering.maxEnrollment}, \t ${offering.meetDays}: ${offering.meetStart.substring(11, 16)} - ${offering.meetEnd.substring(11, 16)}",
+                        text = text,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
