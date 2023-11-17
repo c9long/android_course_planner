@@ -67,7 +67,7 @@ fun SearchPage(currentlyLoggedInUser: String) {
     var courseSelected by remember { mutableStateOf(false) }
     val dbHelper = UserDBHelper(LocalContext.current)
     val courses by remember { mutableStateOf(CourseList.get())}
-    var select by remember { mutableStateOf(Course("", "", "")) }
+    var select by remember { mutableStateOf(CourseTitle("", "")) }
 
     MaterialTheme (
         colorScheme = lightColorScheme(
@@ -110,10 +110,10 @@ fun SearchPage(currentlyLoggedInUser: String) {
 
                 // Search Suggestions
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    val filtered: List<String> = if (!userSearchText.isEmpty()) {
-                        val result = ArrayList<String>()
+                    val filtered: List<CourseTitle> = if (!userSearchText.isEmpty()) {
+                        val result = ArrayList<CourseTitle>()
                         for (course in courses) {
-                            if (course.lowercase().startsWith(userSearchText.lowercase())) {
+                            if (course.code.lowercase().startsWith(userSearchText.lowercase())) {
                                 result.add(course)
                             }
                         }
@@ -124,14 +124,14 @@ fun SearchPage(currentlyLoggedInUser: String) {
                         Row(
                             modifier = Modifier
                                 .clickable(onClick = {
-                                    select = Course(selected, "", "")
+                                    select = selected
                                     courseSelected = true
                                 })
                                 .background(Color.LightGray)
                                 .fillMaxWidth()
                                 .padding(PaddingValues(12.dp, 16.dp))
                         ) {
-                            Text(text = selected, fontSize = 18.sp, color = Color.Black)
+                            Text(text = "${selected.code} : ${selected.title}", fontSize = 18.sp, color = Color.Black)
                         }
                     }
                 }
@@ -146,8 +146,8 @@ fun SearchPage(currentlyLoggedInUser: String) {
         // Pass relevant course information using intent extras
         courseInfoIntent.putExtra("CURRENT_USER", currentlyLoggedInUser)
         courseInfoIntent.putExtra("COURSE_CODE", select.code)
-        courseInfoIntent.putExtra("COURSE_NAME", select.name)
-        courseInfoIntent.putExtra("COURSE_DESCRIPTION", select.description)
+        courseInfoIntent.putExtra("COURSE_NAME", select.title)
+        courseInfoIntent.putExtra("COURSE_DESCRIPTION", "")
         courseInfoIntent.putExtra("INSTRUCTOR_NAME", "John Doe")
         courseInfoIntent.putExtra("COURSE_OFFERING", arrayListOf("Monday 10:00 AM - 12:00 PM",
             "Wednesday 2:00 PM - 4:00 PM",

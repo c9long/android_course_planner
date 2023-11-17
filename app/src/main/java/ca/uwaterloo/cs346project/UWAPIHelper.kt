@@ -13,8 +13,10 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
+data class CourseTitle(val code: String, val title: String)
+
 object CourseList: ViewModel() {
-    private val courseCodes: MutableList<String> = mutableListOf()
+    private val courseCodes: MutableList<CourseTitle> = mutableListOf()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -23,14 +25,15 @@ object CourseList: ViewModel() {
                 for (i in 0 until courseData.length()) {
                     val element = courseData.getJSONObject(i)
                     courseCodes.add(
-                        element.getString("subjectCode") + element.getString("catalogNumber")
+                        CourseTitle(element.getString("subjectCode") + element.getString("catalogNumber"),
+                            element.getString("title"))
                     )
                 }
             }
         }
     }
 
-    fun get(): List<String> {
+    fun get(): List<CourseTitle> {
         return courseCodes
     }
 }
