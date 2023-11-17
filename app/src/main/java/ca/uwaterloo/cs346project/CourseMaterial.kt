@@ -59,14 +59,6 @@ class CourseMaterial : ComponentActivity() {
 
         filePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
-                //val fileName = getFileNameFromUri(it)
-                //userDBHelper.addFile(fileName, it.toString())
-                //val intent = intent
-                //finish()
-                //startActivity(intent)
-                val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                contentResolver.takePersistableUriPermission(it, flags)
-
                 val fileName = getFileNameFromUri(it)
                 userDBHelper.addFile(fileName, it.toString())
                 val intent = intent
@@ -271,8 +263,6 @@ fun openPdfFile(context: Context, fileUriString: String) {
     val fileUri = Uri.parse(fileUriString)
 
 
-
-
     //if (!isFileAccessible(context, fileUri)) {
     //    Toast.makeText(context, "File is not accessible", Toast.LENGTH_SHORT).show()
     //    return
@@ -281,13 +271,12 @@ fun openPdfFile(context: Context, fileUriString: String) {
     try {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(fileUri, "application/pdf")
-            //flags = Intent.FLAG_ACTIVITY_NO_HISTORY
             addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
             //addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             //addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(intent)
-        //ContextCompat.startActivity(context, intent, null)
+        //context.startActivity(intent)
+        ContextCompat.startActivity(context, intent, null)
 
     } catch (e: Exception) {
         Log.e("openPdfFile", "Error opening file: $fileUriString", e)
