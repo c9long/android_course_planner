@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import java.time.LocalDateTime
 
 class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
@@ -29,6 +30,7 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         private const val COLUMN_COURSE_DESC = "course_description"
 
         private const val TABLE_ENROLLMENTS = "enrollments"
+        private const val COLUMN_ENROLLMENT_USER = "username"
         private const val COLUMN_ENROLLMENT_START = "enrollment_start"
         private const val COLUMN_ENROLLMENT_END = "enrollment_end"
         private const val COLUMN_ENROLLMENT_CODE = "enrollment_code"
@@ -57,10 +59,12 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
                 "$COLUMN_COURSE_DESC TEXT)"
 
         val createEnrollmentTable = "CREATE TABLE $TABLE_ENROLLMENTS (" +
+                "$COLUMN_ENROLLMENT_USER TEXT," +
                 "$COLUMN_ENROLLMENT_CODE TEXT," +
                 "$COLUMN_ENROLLMENT_DESC TEXT," +
                 "$COLUMN_ENROLLMENT_START TEXT," +
                 "$COLUMN_ENROLLMENT_END TEXT," +
+                "FOREIGN KEY($COLUMN_ENROLLMENT_USER) REFERENCES $TABLE_USERS($COLUMN_USERNAME)," +
                 "FOREIGN KEY($COLUMN_ENROLLMENT_CODE) REFERENCES $TABLE_COURSES($COLUMN_COURSE_CODE)," +
                 "FOREIGN KEY($COLUMN_ENROLLMENT_DESC) REFERENCES $TABLE_COURSES($COLUMN_COURSE_DESC))"
 
@@ -283,9 +287,30 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         return ret
     }
 
-    fun getAllEnrollments(currentUser: String): List<Event> {
+    fun getAllEnrollments(currentUser: String): MutableList<Event> {
         val db = this.readableDatabase
-        return emptyList();
+        val query = "SELECT * FROM $TABLE_ENROLLMENTS WHERE $COLUMN_ENROLLMENT_USER='$currentUser'"
+        val cursor = db.query(
+            TABLE_ENROLLMENTS,
+            arrayOf(COLUMN_ENROLLMENT_CODE, COLUMN_ENROLLMENT_START, COLUMN_ENROLLMENT_END, COLUMN_COURSE_DESC),
+            query,
+            arrayOf(),
+            null, null, null, null
+        )
+        val ret: MutableList<Event> = mutableListOf()
+        while (cursor.moveToNext()) {
+            ret.add(Event(cursor.getString(0), LocalDateTime.parse(cursor.getString(1)), LocalDateTime.parse(cursor.getString(2)),
+                cursor.getString(3)))
+        }
+
+        cursor.close()
+        db.close()
+        return ret
+    }
+
+    fun addEnrollment(currentUser: String) {
+        val db = this.writableDatabase
+
     }
 }
 

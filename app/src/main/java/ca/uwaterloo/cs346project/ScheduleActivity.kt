@@ -53,10 +53,10 @@ import kotlin.math.roundToInt
 
 data class Event(
     val name: String,
-    val color: Color,
     val start: LocalDateTime,
     val end: LocalDateTime,
     val description: String? = null,
+    val color: Color = Color.Blue,
 )
 
 val EventTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -99,10 +99,10 @@ fun CreateEventList (
     currentUser: String,
 ) {
     val dbHelper = UserDBHelper(LocalContext.current)
-
+    sampleEvents = dbHelper.getAllEnrollments(currentUser)
 }
 
-private val sampleEvents = mutableListOf(
+private var sampleEvents = mutableListOf(
     Event(
         name = "CS 111",
         color = Color(0xFFAFBBF2),
