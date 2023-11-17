@@ -4,11 +4,15 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
+import java.io.File
+
+data class FileRecord(var id: Int, var name: String, var uri: String)
 
 class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
         private const val DATABASE_NAME = "UserDatabase.db"
 
         private const val TABLE_USERS = "users"
@@ -27,6 +31,13 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         private const val COLUMN_COURSE_CODE = "course_code"
         private const val COLUMN_COURSE_NAME = "course_name"
         private const val COLUMN_COURSE_DESC = "course_description"
+
+        private const val TABLE_FILES = "files"
+        private const val COLUMN_FILE_ID = "file_id"
+        private const val COLUMN_FILE_NAME = "file_name"
+
+        private const val COLUMN_FILE_URI = "file_uri"
+
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -50,6 +61,12 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
                 "$COLUMN_COURSE_NAME TEXT," +
                 "$COLUMN_COURSE_DESC TEXT)"
 
+        val createFilesTableStatement = "CREATE TABLE $TABLE_FILES (" +
+                "$COLUMN_FILE_ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "$COLUMN_FILE_NAME TEXT, " +
+                "$COLUMN_FILE_URI TEXT)"
+
+        db.execSQL(createFilesTableStatement)
         db.execSQL(createTableStatement)
         db.execSQL(createReviewsTableStatement)
         db.execSQL(createCourseTable)
@@ -59,6 +76,7 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         db.execSQL("DROP TABLE IF EXISTS $TABLE_USERS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_COURSE_REVIEWS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_COURSES")
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_FILES")
         onCreate(db)
     }
 
@@ -203,10 +221,10 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         val db = this.readableDatabase
         val cursor = db.rawQuery(
             "SELECT $COLUMN_USERNAME, $COLUMN_REVIEW_DATE, $COLUMN_CONTENT, $COLUMN_RATING " +
-                "FROM $TABLE_COURSE_REVIEWS INNER JOIN $TABLE_USERS " +
-                "ON $TABLE_COURSE_REVIEWS.$COLUMN_USER_ID = $TABLE_USERS.$COLUMN_ID " +
-                "WHERE $COLUMN_COURSE_CODE = '" + courseCode + "' " +
-                "ORDER BY $TABLE_COURSE_REVIEWS.$COLUMN_RATING DESC", null)
+                    "FROM $TABLE_COURSE_REVIEWS INNER JOIN $TABLE_USERS " +
+                    "ON $TABLE_COURSE_REVIEWS.$COLUMN_USER_ID = $TABLE_USERS.$COLUMN_ID " +
+                    "WHERE $COLUMN_COURSE_CODE = '" + courseCode + "' " +
+                    "ORDER BY $TABLE_COURSE_REVIEWS.$COLUMN_RATING DESC", null)
 
         // Add courses to list
         val ret: MutableList<CourseReview> = mutableListOf()
@@ -267,6 +285,95 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         db.close()
         return ret
     }
+
+    fun addFile(fileName: String, fileUri: String): Boolean {
+        val db = this.writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_FILE_NAME, fileName)
+            put(COLUMN_FILE_URI, fileUri) // Store the URI
+        }
+
+        val result = db.insert(TABLE_FILES, null, values)
+        db.close()
+        return result != -1L
+    }
+
+    //fun deleteFile(fileId: Int): Boolean {
+    //    val db = this.writableDatabase
+    //    val result = db.delete(TABLE_FILES, "$COLUMN_FILE_ID = ?", arrayOf(fileId.toString()))
+    //    db.close()
+    //    return result > 0
+    //}
+
+    fun deleteFile(fileId: Int): Boolean {
+        val db = this.readableDatabase
+        val cursor = db.query(
+            TABLE_FILES, arrayOf(COLUMN_FILE_URI),
+            "$COLUMN_FILE_ID = ?", arrayOf(fileId.toString()),
+            null, null, null
+        )
+
+        var filePath = ""
+        if (cursor.moveToFirst()) {
+            filePath = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FILE_URI))
+        }
+        cursor.close()
+
+        if (filePath.isNotEmpty()) {
+            val fileToDelete = File(filePath)
+            if (!fileToDelete.delete()) {
+                Log.e("UserDBHelper", "Failed to delete file: $filePath")
+            }
+        }
+
+        // Now delete the record from the database
+        db.close()
+        val dbWrite = this.writableDatabase
+        val result = dbWrite.delete(TABLE_FILES, "$COLUMN_FILE_ID = ?", arrayOf(fileId.toString()))
+        dbWrite.close()
+
+        return result > 0
+    }
+
+
+    fun getAllFiles(): List<FileRecord> {
+        val fileList = mutableListOf<FileRecord>()
+        val db = this.readableDatabase
+        val cursor = db.query(TABLE_FILES, null, null, null, null, null, null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val fileId = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_FILE_ID))
+                val fileName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FILE_NAME))
+                val fileUri = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FILE_URI)) // Retrieve the URI
+                fileList.add(FileRecord(fileId, fileName, fileUri)) // Include the URI in the FileRecord
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        db.close()
+        return fileList
+    }
+
+    fun renameFile(fileId: Int, newName: String): Boolean {
+        val db = this.writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_FILE_NAME, newName)
+        }
+        val result = db.update(TABLE_FILES, values, "$COLUMN_FILE_ID = ?", arrayOf(fileId.toString()))
+        db.close()
+        return result > 0
+    }
+
+    fun isFileExist(fileName: String): Boolean {
+        val db = this.readableDatabase
+        val cursor = db.query(
+            TABLE_FILES, arrayOf(COLUMN_FILE_ID),
+            "$COLUMN_FILE_NAME = ?", arrayOf(fileName),
+            null, null, null
+        )
+        val fileExists = cursor.count > 0
+        cursor.close()
+        db.close()
+        return fileExists
+    }
 }
-
-

@@ -47,6 +47,7 @@ fun HomePage(currentlyLoggedInUser: String) {
     var showColumn1 by remember { mutableStateOf(false) }
     var showColumn2 by remember { mutableStateOf(false) }
     var showColumn3 by remember { mutableStateOf(false) }
+    var showColumn4 by remember { mutableStateOf(false) }
 
 
     Column(
@@ -67,6 +68,7 @@ fun HomePage(currentlyLoggedInUser: String) {
                 showColumn1 = true
                 showColumn2 = false
                 showColumn3 = false
+                showColumn4 = false
             },
             modifier = buttonModifier
         ) {
@@ -78,10 +80,23 @@ fun HomePage(currentlyLoggedInUser: String) {
                 showColumn1 = false
                 showColumn2 = true
                 showColumn3 = false
+                showColumn4 = false
             },
             modifier = buttonModifier
         ) {
             Text("Course Search", fontSize = 24.sp)
+        }
+
+        Button(
+            onClick = {
+                showColumn1 = false
+                showColumn2 = false
+                showColumn3 = true
+                showColumn4 = false
+            },
+            modifier = buttonModifier
+        ) {
+            Text("Course Material", fontSize = 24.sp)
         }
 
 
@@ -89,7 +104,8 @@ fun HomePage(currentlyLoggedInUser: String) {
             onClick = {
                 showColumn1 = false
                 showColumn2 = false
-                showColumn3 = true
+                showColumn3 = false
+                showColumn4 = true
             },
             modifier = buttonModifier
         ) {
@@ -113,8 +129,16 @@ fun HomePage(currentlyLoggedInUser: String) {
     }
 
     if (showColumn3) {
-        LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
+        val context = LocalContext.current
+        val courseMaterialIntent = Intent(context, CourseMaterial::class.java)
+        context.startActivity(courseMaterialIntent)
         showColumn3 = false
+    }
+
+
+    if (showColumn4) {
+        LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
+        showColumn4 = false
     }
 }
 
