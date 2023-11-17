@@ -41,6 +41,8 @@ import java.util.Locale
 
 data class CourseReview(val reviewer: String, val courseCode: String, val date: String, val content: String, val stars: Int)
 
+val noOfferings: String = "Course not offered this term."
+
 class CourseInfoActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,8 +58,13 @@ class CourseInfoActivity : ComponentActivity() {
                     val courseName = intent.getStringExtra("COURSE_NAME") ?: ""
                     val courseDescription = intent.getStringExtra("COURSE_DESCRIPTION") ?: ""
                     val instructorName = intent.getStringExtra("INSTRUCTOR_NAME") ?: ""
-                    val courseOfferings =
-                        intent.getStringArrayListExtra("COURSE_OFFERING") ?: emptyList()
+                    //val courseOfferings = intent.getStringArrayListExtra("COURSE_OFFERING") ?: emptyList()
+                    var courseOfferings: List<CourseSchedule>
+                    try {
+                        courseOfferings = UWAPIHelper.getCourseScheduleData(courseCode)
+                    } catch (e: Exception) {
+                        courseOfferings = listOf(CourseSchedule(noOfferings, 0, 0, "", "", ""))
+                    }
 
                     CourseInfoScreen(
                         currentlyLoggedInUser, courseCode, courseName, courseDescription, instructorName,
@@ -87,7 +94,7 @@ fun CourseInfoScreen(
     courseName: String,
     courseDescription: String,
     instructorName: String,
-    courseOfferings: List<String>,
+    courseOfferings: List<CourseSchedule>,
     onBackButtonClick: () -> Unit,
 ) {
     MaterialTheme (
@@ -122,27 +129,30 @@ fun CourseInfoScreen(
             )
 
             courseOfferings.forEachIndexed { index, offering ->
-                val offeringParts = offering.split(" ")
-                if (offeringParts.size >= 2) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = offeringParts[0], style = MaterialTheme.typography.bodySmall)
-                        Text(
-                            text = offeringParts.subList(1, offeringParts.size).joinToString(" "),
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
+                val text: String
+                if (offering.section == noOfferings) {
+                    text = noOfferings
+                } else {
+                    text = "Enrollment: ${offering.enrollment} / ${offering.maxEnrollment}, \t ${offering.meetDays}: ${offering.meetStart.substring(11, 16)} - ${offering.meetEnd.substring(11, 16)}"
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = offering.section, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
 
-                    // Add a divider between rows except for the last row
-                    if (index < courseOfferings.size - 1) {
-                        Divider(modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp))
-                    }
+                // Add a divider between rows except for the last row
+                if (index < courseOfferings.size - 1) {
+                    Divider(modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp))
                 }
             }
 
@@ -293,21 +303,5 @@ fun RatingBar(
             )
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewCourseInfoScreen() {
-    CourseInfoScreen(
-        "abel",
-        "CS111",
-        "Introduction to Programming",
-        "Learn the basics of programming using popular programming languages.",
-        "John Doe",
-        listOf("Monday 10:00 AM - 12:00 PM",
-            "Wednesday 2:00 PM - 4:00 PM",
-            "Friday 10:00 AM - 12:00 PM"),
-        onBackButtonClick = {}
-    )
 }
 

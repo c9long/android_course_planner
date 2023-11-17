@@ -37,8 +37,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.ui.platform.LocalContext
 
-data class Course(val code: String, val name: String, val description: String)
-
 class CourseSearchActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,7 +64,7 @@ fun SearchPage(currentlyLoggedInUser: String) {
     var userSearchText by remember { mutableStateOf("") } // Current string the user is searching for
     var courseSelected by remember { mutableStateOf(false) }
     val dbHelper = UserDBHelper(LocalContext.current)
-    val courses by remember { mutableStateOf(dbHelper.getAllCourses())}
+    val courses by remember { mutableStateOf(CourseList.get())}
     var select by remember { mutableStateOf(Course("", "", "")) }
 
     MaterialTheme (
@@ -131,7 +129,7 @@ fun SearchPage(currentlyLoggedInUser: String) {
                                 .fillMaxWidth()
                                 .padding(PaddingValues(12.dp, 16.dp))
                         ) {
-                            Text(text = selected.code, fontSize = 18.sp, color = Color.Black)
+                            Text(text = "${selected.code} : ${selected.title}", fontSize = 18.sp, color = Color.Black)
                         }
                     }
                 }
@@ -146,9 +144,9 @@ fun SearchPage(currentlyLoggedInUser: String) {
         // Pass relevant course information using intent extras
         courseInfoIntent.putExtra("CURRENT_USER", currentlyLoggedInUser)
         courseInfoIntent.putExtra("COURSE_CODE", select.code)
-        courseInfoIntent.putExtra("COURSE_NAME", select.name)
+        courseInfoIntent.putExtra("COURSE_NAME", select.title)
         courseInfoIntent.putExtra("COURSE_DESCRIPTION", select.description)
-        courseInfoIntent.putExtra("INSTRUCTOR_NAME", "John Doe")
+        courseInfoIntent.putExtra("INSTRUCTOR_NAME", "")
         courseInfoIntent.putExtra("COURSE_OFFERING", arrayListOf("Monday 10:00 AM - 12:00 PM",
             "Wednesday 2:00 PM - 4:00 PM",
             "Friday 10:00 AM - 12:00 PM")
