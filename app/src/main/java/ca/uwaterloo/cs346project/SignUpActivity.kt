@@ -146,7 +146,8 @@ fun SignupPage() {
     }
 
     if (success) {
-        LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
+        LocalContext.current.startActivity(Intent(LocalContext.current, HomePageActivity::class.java))
+        //LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
         success = false
     }
 }
