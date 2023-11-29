@@ -50,7 +50,7 @@ fun CourseMaterialFolderPage(userDBHelper: UserDBHelper) {
     var showAddFolderDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        folderList = userDBHelper.getAllFolders() // Change to getAllFolders
+        folderList = userDBHelper.getAllFolders()
     }
 
     Scaffold(
@@ -98,14 +98,14 @@ fun CourseMaterialFolderPage(userDBHelper: UserDBHelper) {
         AddFolderDialog(
             onAddFolder = { folderName ->
                 userDBHelper.addFolder(folderName)
-                folderList = userDBHelper.getAllFolders() // Refresh the list
+                folderList = userDBHelper.getAllFolders()
                 showAddFolderDialog = false
             },
             onDismiss = {
                 showAddFolderDialog = false
             },
             folderNameExists = { folderName ->
-                userDBHelper.folderNameExists(folderName) // Implement this method in UserDBHelper
+                userDBHelper.folderNameExists(folderName)
             }
         )
     }
@@ -238,7 +238,7 @@ fun AddFolderDialog(
 @Composable
 fun RenameFolderDialog(initialName: String, onRename: (String) -> Unit, onDismiss: () -> Unit) {
     var newName by remember { mutableStateOf(initialName) }
-    val maxLength = 20 // Maximum length for folder name
+    val maxLength = 20
 
     AlertDialog(
         onDismissRequest = onDismiss,

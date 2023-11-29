@@ -45,12 +45,11 @@ class CourseMaterial : ComponentActivity() {
         val folderName = intent.getStringExtra("FOLDER_NAME") ?: "Default Folder"
 
         fun getFileNameFromUri(uri: Uri): String {
-            var name = "New file" // Default name if original name can't be found
+            var name = "New file" // Default name
             val cursor = contentResolver.query(uri, null, null, null, null)
 
             cursor?.use {
                 if (it.moveToFirst()) {
-                    // Get the column index of MediaStore.Images.Media.DISPLAY_NAME
                     val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     if (nameIndex >= 0) {
                         name = it.getString(nameIndex)
@@ -81,12 +80,10 @@ class CourseMaterial : ComponentActivity() {
                 val context = this@CourseMaterial
                 val fileName = getFileNameFromUri(it)
                 if (userDBHelper.isFileExistInFolder(folderId, fileName)) {
-                    // Show an alert dialog
                     Toast.makeText(context, "A file with the same name already exists.", Toast.LENGTH_SHORT).show()
                 } else {
-                    // File with the same name does not exist, proceed with copying
                     val internalFilePath = copyFileToInternalStorage(context, it, fileName)
-                    userDBHelper.addFileToFolder(folderId, fileName, internalFilePath) // Store the internal path
+                    userDBHelper.addFileToFolder(folderId, fileName, internalFilePath)
                     val intent = intent
                     finish()
                     startActivity(intent)
@@ -172,7 +169,7 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper,
             initialName = selectedFileForRename!!.name,
             onRename = { newName ->
                 if (userDBHelper.renameFile(selectedFileForRename!!.id, newName)) {
-                    fileList = userDBHelper.getFilesInFolder(folderId) // Refresh the list from the database
+                    fileList = userDBHelper.getFilesInFolder(folderId)
                     selectedFileForRename = null
                 }
             },
@@ -188,7 +185,7 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper,
             confirmButton = {
                 TextButton(onClick = {
                     if (userDBHelper.deleteFile(fileToDelete!!.id)) {
-                        fileList = userDBHelper.getFilesInFolder(folderId) // Refresh the list after deletion
+                        fileList = userDBHelper.getFilesInFolder(folderId)
                         fileToDelete = null
                     }
                 }) {
@@ -206,7 +203,7 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper,
 
 @Composable
 fun FileFolderItem(fileName: String,
-                   fileUri: String, // Add this to pass the URI of the file
+                   fileUri: String,
                    onDelete: () -> Unit,
                    onRename: () -> Unit) {
     val context = LocalContext.current
@@ -225,7 +222,7 @@ fun FileFolderItem(fileName: String,
         ) {
             Text(text = fileName, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.weight(1f))
-            IconButton(onClick = onRename) { // Separate button for rename
+            IconButton(onClick = onRename) {
                 Icon(Icons.Default.Edit, "Rename")
             }
             IconButton(onClick = onDelete) {
@@ -240,7 +237,7 @@ fun FileFolderItem(fileName: String,
 @Composable
 fun RenameFileDialog(initialName: String, onRename: (String) -> Unit, onDismiss: () -> Unit) {
     var newName by remember { mutableStateOf(initialName) }
-    val maxLength = 20 // Maximum length for file name
+    val maxLength = 20
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -281,7 +278,7 @@ fun openPdfFile(context: Context, internalFilePath: String) {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(fileUri, "application/pdf")
             addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // Grant temporary read permission to the content URI
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         ContextCompat.startActivity(context, intent, null)
     } catch (e: Exception) {
