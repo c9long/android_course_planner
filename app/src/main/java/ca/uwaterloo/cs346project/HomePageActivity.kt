@@ -16,23 +16,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import ca.uwaterloo.cs346project.ui.theme.getColorScheme
 
 class HomePageActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Cs346projectTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    val currentlyLoggedInUser = intent.getStringExtra("CURRENT_USER") ?: ""
-                    HomePage(currentlyLoggedInUser)
-                }
-            }
+            val currentlyLoggedInUser = intent.getStringExtra("CURRENT_USER") ?: ""
+            HomePage(currentlyLoggedInUser)
         }
     }
 }
@@ -50,55 +43,79 @@ fun HomePage(currentlyLoggedInUser: String) {
 
     var nextPage by remember { mutableStateOf(GoToNext.Stay) }
 
+    var checked by remember { mutableStateOf(MainActivity.settings.darkMode) }
+    var changed by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Text(
-            text = "Course Planner",
-            fontSize = 40.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF2196F3),
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-        )
-        Button(
-            onClick = {
-                nextPage = GoToNext.Schedule
-            },
-            modifier = buttonModifier
+    MaterialTheme(colorScheme = getColorScheme(true, checked)) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
         ) {
-            Text("Course Schedule", fontSize = 24.sp)
-        }
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Text(
+                    text = "Course Planner",
+                    fontSize = 40.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2196F3),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                )
+                Button(
+                    onClick = {
+                        nextPage = GoToNext.Schedule
+                    },
+                    modifier = buttonModifier
+                ) {
+                    Text("Course Schedule", fontSize = 24.sp)
+                }
 
-        Button(
-            onClick = {
-                nextPage = GoToNext.Search
-            },
-            modifier = buttonModifier
-        ) {
-            Text("Course Search", fontSize = 24.sp)
-        }
+                Button(
+                    onClick = {
+                        nextPage = GoToNext.Search
+                    },
+                    modifier = buttonModifier
+                ) {
+                    Text("Course Search", fontSize = 24.sp)
+                }
 
-        Button(
-            onClick = {
-                nextPage = GoToNext.Material
-            },
-            modifier = buttonModifier
-        ) {
-            Text("Course Material", fontSize = 24.sp)
-        }
+                Button(
+                    onClick = {
+                        nextPage = GoToNext.Material
+                    },
+                    modifier = buttonModifier
+                ) {
+                    Text("Course Material", fontSize = 24.sp)
+                }
 
 
-        Button(
-            onClick = {
-                nextPage = GoToNext.Login
-            },
-            modifier = buttonModifier
-        ) {
-            Text("Log Out", fontSize = 24.sp)
+                Button(
+                    onClick = {
+                        nextPage = GoToNext.Login
+                    },
+                    modifier = buttonModifier
+                ) {
+                    Text("Log Out", fontSize = 24.sp)
+                }
+
+                Switch(
+                    checked = checked,
+                    modifier = Modifier.padding(8.dp),
+                    onCheckedChange = {
+                        checked = it
+                        changed = true
+                        MainActivity.settings.darkMode = checked
+                    }
+                )
+                if (changed) {
+                    WriteSettings()
+                    changed = false
+                }
+
+            }
         }
     }
 
@@ -109,6 +126,7 @@ fun HomePage(currentlyLoggedInUser: String) {
             context.startActivity(scheduleIntent)
             nextPage = GoToNext.Stay
         }
+
         GoToNext.Search -> {
             val context = LocalContext.current
             val courseActivityIntent = Intent(context, CourseSearchActivity::class.java)
@@ -116,16 +134,24 @@ fun HomePage(currentlyLoggedInUser: String) {
             context.startActivity(courseActivityIntent)
             nextPage = GoToNext.Stay
         }
+
         GoToNext.Material -> {
             val context = LocalContext.current
             val courseMaterialIntent = Intent(context, CourseMaterial::class.java)
             context.startActivity(courseMaterialIntent)
             nextPage = GoToNext.Stay
         }
+
         GoToNext.Login -> {
-            LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
+            LocalContext.current.startActivity(
+                Intent(
+                    LocalContext.current,
+                    LoginActivity::class.java
+                )
+            )
             nextPage = GoToNext.Stay
         }
+
         else -> {}
     }
 }
