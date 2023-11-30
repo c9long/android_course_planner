@@ -37,6 +37,10 @@ class HomePageActivity : ComponentActivity() {
     }
 }
 
+enum class GoToNext {
+    Stay, Schedule, Search, Material, Login
+}
+
 
 @Composable
 fun HomePage(currentlyLoggedInUser: String) {
@@ -44,10 +48,7 @@ fun HomePage(currentlyLoggedInUser: String) {
         .fillMaxWidth()
         .padding(8.dp)
 
-    var showColumn1 by remember { mutableStateOf(false) }
-    var showColumn2 by remember { mutableStateOf(false) }
-    var showColumn3 by remember { mutableStateOf(false) }
-    var showColumn4 by remember { mutableStateOf(false) }
+    var nextPage by remember { mutableStateOf(GoToNext.Stay) }
 
 
     Column(
@@ -65,10 +66,7 @@ fun HomePage(currentlyLoggedInUser: String) {
         )
         Button(
             onClick = {
-                showColumn1 = true
-                showColumn2 = false
-                showColumn3 = false
-                showColumn4 = false
+                nextPage = GoToNext.Schedule
             },
             modifier = buttonModifier
         ) {
@@ -77,10 +75,7 @@ fun HomePage(currentlyLoggedInUser: String) {
 
         Button(
             onClick = {
-                showColumn1 = false
-                showColumn2 = true
-                showColumn3 = false
-                showColumn4 = false
+                nextPage = GoToNext.Search
             },
             modifier = buttonModifier
         ) {
@@ -89,10 +84,7 @@ fun HomePage(currentlyLoggedInUser: String) {
 
         Button(
             onClick = {
-                showColumn1 = false
-                showColumn2 = false
-                showColumn3 = true
-                showColumn4 = false
+                nextPage = GoToNext.Material
             },
             modifier = buttonModifier
         ) {
@@ -102,10 +94,7 @@ fun HomePage(currentlyLoggedInUser: String) {
 
         Button(
             onClick = {
-                showColumn1 = false
-                showColumn2 = false
-                showColumn3 = false
-                showColumn4 = true
+                nextPage = GoToNext.Login
             },
             modifier = buttonModifier
         ) {
@@ -113,32 +102,27 @@ fun HomePage(currentlyLoggedInUser: String) {
         }
     }
 
-    if (showColumn1) {
-        val context = LocalContext.current
-        val scheduleIntent = Intent(context, ScheduleActivity::class.java)
-        context.startActivity(scheduleIntent)
-        showColumn1 = false
-    }
-
-    if (showColumn2) {
-        val context = LocalContext.current
-        val courseActivityIntent = Intent(context, CourseSearchActivity::class.java)
-        courseActivityIntent.putExtra("CURRENT_USER", currentlyLoggedInUser)
-        context.startActivity(courseActivityIntent)
-        showColumn2 = false
-    }
-
-    if (showColumn3) {
-        val context = LocalContext.current
-        val courseMaterialIntent = Intent(context, CourseMaterial::class.java)
-        context.startActivity(courseMaterialIntent)
-        showColumn3 = false
-    }
-
-
-    if (showColumn4) {
-        LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
-        showColumn4 = false
+    when (nextPage) {
+        GoToNext.Schedule -> {
+            val context = LocalContext.current
+            val scheduleIntent = Intent(context, ScheduleActivity::class.java)
+            context.startActivity(scheduleIntent)
+        }
+        GoToNext.Search -> {
+            val context = LocalContext.current
+            val courseActivityIntent = Intent(context, CourseSearchActivity::class.java)
+            courseActivityIntent.putExtra("CURRENT_USER", currentlyLoggedInUser)
+            context.startActivity(courseActivityIntent)
+        }
+        GoToNext.Material -> {
+            val context = LocalContext.current
+            val courseMaterialIntent = Intent(context, CourseMaterial::class.java)
+            context.startActivity(courseMaterialIntent)
+        }
+        GoToNext.Login -> {
+            LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
+        }
+        else -> {}
     }
 }
 
