@@ -107,20 +107,24 @@ fun HomePage(currentlyLoggedInUser: String) {
             val context = LocalContext.current
             val scheduleIntent = Intent(context, ScheduleActivity::class.java)
             context.startActivity(scheduleIntent)
+            nextPage = GoToNext.Stay
         }
         GoToNext.Search -> {
             val context = LocalContext.current
             val courseActivityIntent = Intent(context, CourseSearchActivity::class.java)
             courseActivityIntent.putExtra("CURRENT_USER", currentlyLoggedInUser)
             context.startActivity(courseActivityIntent)
+            nextPage = GoToNext.Stay
         }
         GoToNext.Material -> {
             val context = LocalContext.current
             val courseMaterialIntent = Intent(context, CourseMaterial::class.java)
             context.startActivity(courseMaterialIntent)
+            nextPage = GoToNext.Stay
         }
         GoToNext.Login -> {
             LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
+            nextPage = GoToNext.Stay
         }
         else -> {}
     }
