@@ -100,21 +100,27 @@ fun HomePage(currentlyLoggedInUser: String) {
                 ) {
                     Text("Log Out", fontSize = 24.sp)
                 }
-
-                Switch(
-                    checked = checked,
-                    modifier = Modifier.padding(8.dp),
-                    onCheckedChange = {
-                        checked = it
-                        changed = true
-                        MainActivity.settings.darkMode = checked
+                Spacer(modifier = Modifier.weight(1f))
+                Row(modifier = Modifier.padding(8.dp)) {
+                    Text(
+                        "Toggle Dark Mode",
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(vertical = 12.dp)
+                    )
+                    Switch(
+                        checked = checked,
+                        onCheckedChange = {
+                            checked = it
+                            changed = true
+                            MainActivity.settings.darkMode = checked
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    if (changed) {
+                        WriteSettings()
+                        changed = false
                     }
-                )
-                if (changed) {
-                    WriteSettings()
-                    changed = false
                 }
-
             }
         }
     }
