@@ -92,6 +92,7 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         db.execSQL("DROP TABLE IF EXISTS $TABLE_COURSE_REVIEWS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_COURSES")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_FILES")
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_FOLDERS")
         onCreate(db)
     }
 
