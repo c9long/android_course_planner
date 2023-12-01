@@ -65,7 +65,7 @@ fun LoginPage() {
             text = "Course Planner",
             fontSize = 40.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF2196F3),
+            color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .padding(16.dp)

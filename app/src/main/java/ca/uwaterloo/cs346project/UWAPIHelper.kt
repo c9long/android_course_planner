@@ -40,7 +40,7 @@ object CourseList: ViewModel() {
     }
 }
 
-object UWAPIHelper: ViewModel() {
+object UWAPIHelper {
     var curTerm: String
 
     init {

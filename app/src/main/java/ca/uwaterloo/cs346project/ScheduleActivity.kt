@@ -23,9 +23,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
@@ -62,12 +59,14 @@ fun BasicEvent(
         Text(
             text = "${event.start.format(EventTimeFormatter)} - ${event.end.format(EventTimeFormatter)}",
             style = MaterialTheme.typography.labelLarge,
+            color = Color.Black
         )
 
         Text(
             text = event.name,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
+            color = Color.Black
         )
 
         if (event.description != null) {
@@ -76,6 +75,7 @@ fun BasicEvent(
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                color = Color.Black
             )
         }
     }
