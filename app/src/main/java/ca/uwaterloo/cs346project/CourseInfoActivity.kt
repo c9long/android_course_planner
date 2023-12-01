@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
@@ -32,11 +33,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import ca.uwaterloo.cs346project.UserDBHelper
+
 
 
 data class CourseReview(val reviewer: String, val courseCode: String, val date: String, val content: String, val stars: Int)
@@ -94,6 +99,8 @@ fun CourseInfoScreen(
     courseOfferings: List<CourseSchedule>,
     onBackButtonClick: () -> Unit,
 ) {
+    var showToast by remember { mutableStateOf(false) }
+
     MaterialTheme (
         typography = Typography(),
         shapes = Shapes()
@@ -125,6 +132,13 @@ fun CourseInfoScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
+            if (showToast) {
+                Toast("Course added!") {
+                    // Dismiss the toast when clicked
+                    showToast = false
+                }
+            }
+
             courseOfferings.forEachIndexed { index, offering ->
                 val text: String
                 if (offering.section == noOfferings) {
@@ -138,6 +152,11 @@ fun CourseInfoScreen(
                         .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    val course = Course(courseCode, courseName, courseDescription)
+                    AddCourseButton(currentlyLoggedInUser, offering, course) {
+                        // Set the state to show the toast
+                        showToast = true
+                    }
                     Text(text = offering.section, style = MaterialTheme.typography.bodySmall)
                     Text(
                         text = text,
@@ -190,6 +209,38 @@ fun CourseInfoScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AddCourseButton(currUser: String, cs: CourseSchedule, course: Course, onClick: () -> Unit) {
+    // Material Design button that triggers the custom toast when clicked
+    val dbHelper = UserDBHelper(LocalContext.current)
+    Button(
+        onClick = {
+            onClick()
+            dbHelper.addEnrollment(currUser, cs, course)
+        },
+        modifier = Modifier.padding(0.dp)
+    ) {
+        Text(
+            text = "Add to calendar",
+            fontSize = 12.sp
+        )
+    }
+}
+@Composable
+fun Toast(message: String, onDismiss: () -> Unit) {
+    // A custom toast-like composable
+    Card(
+        modifier = Modifier
+            .padding(16.dp)
+            .clickable {
+                // Call the onDismiss function when the toast is clicked
+                onDismiss()
+            }
+    ) {
+        Text(message, modifier = Modifier.padding(16.dp))
     }
 }
 

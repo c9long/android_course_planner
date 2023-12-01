@@ -41,7 +41,6 @@ fun HomePage(currentlyLoggedInUser: String) {
         .padding(8.dp)
 
     var nextPage by remember { mutableStateOf(GoToNext.Stay) }
-
     var checked by remember { mutableStateOf(MainActivity.settings.darkMode) }
     var changed by remember { mutableStateOf(false) }
 
@@ -128,6 +127,7 @@ fun HomePage(currentlyLoggedInUser: String) {
         GoToNext.Schedule -> {
             val context = LocalContext.current
             val scheduleIntent = Intent(context, ScheduleActivity::class.java)
+            scheduleIntent.putExtra("CURRENT_USER", currentlyLoggedInUser)
             context.startActivity(scheduleIntent)
             nextPage = GoToNext.Stay
         }

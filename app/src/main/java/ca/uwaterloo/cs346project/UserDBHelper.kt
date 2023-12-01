@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import java.time.LocalDateTime
 import android.util.Log
 import java.io.File
 
@@ -14,7 +15,7 @@ data class FolderRecord(var id: Int, var name: String)
 class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
         private const val DATABASE_NAME = "UserDatabase.db"
 
         private const val TABLE_USERS = "users"
@@ -33,6 +34,14 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         private const val COLUMN_COURSE_CODE = "course_code"
         private const val COLUMN_COURSE_NAME = "course_name"
         private const val COLUMN_COURSE_DESC = "course_description"
+
+        private const val TABLE_ENROLLMENTS = "enrollments"
+        private const val COLUMN_ENROLLMENT_USER = "username"
+        private const val COLUMN_ENROLLMENT_DAY = "enrollment_day"
+        private const val COLUMN_ENROLLMENT_START = "enrollment_start"
+        private const val COLUMN_ENROLLMENT_END = "enrollment_end"
+        private const val COLUMN_ENROLLMENT_CODE = "enrollment_code"
+        private const val COLUMN_ENROLLMENT_DESC = "enrollment_description"
 
         private const val TABLE_FILES = "files"
         private const val COLUMN_REF_COUNT = "ref_count"
@@ -67,6 +76,17 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
                 "$COLUMN_COURSE_NAME TEXT," +
                 "$COLUMN_COURSE_DESC TEXT)"
 
+        val createEnrollmentTable = "CREATE TABLE $TABLE_ENROLLMENTS (" +
+                "$COLUMN_ENROLLMENT_USER TEXT," +
+                "$COLUMN_ENROLLMENT_CODE TEXT," +
+                "$COLUMN_ENROLLMENT_DESC TEXT," +
+                "$COLUMN_ENROLLMENT_DAY TEXT," +
+                "$COLUMN_ENROLLMENT_START TEXT," +
+                "$COLUMN_ENROLLMENT_END TEXT," +
+                "FOREIGN KEY($COLUMN_ENROLLMENT_USER) REFERENCES $TABLE_USERS($COLUMN_USERNAME)," +
+                "FOREIGN KEY($COLUMN_ENROLLMENT_CODE) REFERENCES $TABLE_COURSES($COLUMN_COURSE_CODE)," +
+                "FOREIGN KEY($COLUMN_ENROLLMENT_DESC) REFERENCES $TABLE_COURSES($COLUMN_COURSE_DESC))"
+
         val createFilesTableStatement = "CREATE TABLE $TABLE_FILES (" +
                 "$COLUMN_FILE_ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "$COLUMN_FILE_NAME TEXT, " +
@@ -85,12 +105,14 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         db.execSQL(createTableStatement)
         db.execSQL(createReviewsTableStatement)
         db.execSQL(createCourseTable)
+        db.execSQL(createEnrollmentTable)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         db.execSQL("DROP TABLE IF EXISTS $TABLE_USERS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_COURSE_REVIEWS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_COURSES")
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_ENROLLMENTS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_FILES")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_FOLDERS")
         onCreate(db)
@@ -301,6 +323,102 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         cursor.close()
         db.close()
         return ret
+    }
+
+    fun getAllEnrollments(currentUser: String): MutableList<Event> {
+        val db = this.readableDatabase
+        val query = "$COLUMN_ENROLLMENT_USER='$currentUser'"
+        val cursor = db.query(
+            TABLE_ENROLLMENTS,
+            arrayOf(COLUMN_ENROLLMENT_CODE, COLUMN_ENROLLMENT_DAY, COLUMN_ENROLLMENT_START, COLUMN_ENROLLMENT_END, COLUMN_ENROLLMENT_DESC),
+            query,
+            arrayOf(),
+            null, null, null, null
+        )
+        val ret: MutableList<Event> = mutableListOf()
+        while (cursor.moveToNext()) {
+            val codeIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_CODE)
+            val dayIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_DAY)
+            val startIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_START)
+            val endIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_END)
+            val descIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_DESC)
+
+            if (codeIdx != -1 && startIdx != -1 && endIdx != -1 && descIdx != -1) {
+                val code = cursor.getString(codeIdx)
+                val day = cursor.getString(dayIdx)
+                var start = LocalDateTime.parse(cursor.getString(startIdx))
+                var end = LocalDateTime.parse(cursor.getString(endIdx))
+                val desc = cursor.getString(descIdx)
+
+                for (char in day) {
+                    when (char) {
+                        'M' -> {
+                            start = start.withYear(2023)
+                            start = start.withMonth(5)
+                            start = start.withDayOfMonth(15)
+                            end = end.withYear(2023)
+                            end = end.withMonth(5)
+                            end = end.withDayOfMonth(15)
+                        }
+                        'T' -> {
+                            start = start.withYear(2023)
+                            start = start.withMonth(5)
+                            start = start.withDayOfMonth(16)
+                            end = end.withYear(2023)
+                            end = end.withMonth(5)
+                            end = end.withDayOfMonth(16)
+                        }
+                        'W' -> {
+                            start = start.withYear(2023)
+                            start = start.withMonth(5)
+                            start = start.withDayOfMonth(17)
+                            end = end.withYear(2023)
+                            end = end.withMonth(5)
+                            end = end.withDayOfMonth(17)
+                        }
+                        'R' -> {
+                            start = start.withYear(2023)
+                            start = start.withMonth(5)
+                            start = start.withDayOfMonth(18)
+                            end = end.withYear(2023)
+                            end = end.withMonth(5)
+                            end = end.withDayOfMonth(18)
+                        }
+                        'F' -> {
+                            start = start.withYear(2023)
+                            start = start.withMonth(5)
+                            start = start.withDayOfMonth(19)
+                            end = end.withYear(2023)
+                            end = end.withMonth(5)
+                            end = end.withDayOfMonth(19)
+                        }
+                    }
+                    ret.add(Event(code, start, end, desc))
+                }
+            }
+        }
+
+        cursor.close()
+        db.close()
+        return ret
+    }
+
+    fun addEnrollment(currentUser: String, cs: CourseSchedule, course: Course) : Boolean {
+        val db = this.writableDatabase
+
+        val value = ContentValues().apply {
+            put(COLUMN_ENROLLMENT_USER, currentUser)
+            put(COLUMN_ENROLLMENT_CODE, course.code)
+            put(COLUMN_ENROLLMENT_DESC, course.description)
+            put(COLUMN_ENROLLMENT_DAY, cs.meetDays)
+            put(COLUMN_ENROLLMENT_START, cs.meetStart)
+            put(COLUMN_ENROLLMENT_END, cs.meetEnd)
+        }
+
+        val result = db.insert(TABLE_ENROLLMENTS, null, value)
+        db.close()
+
+        return result != -1L
     }
 
     fun addFileToFolder(folderId: Int, fileName: String, fileUri: String): Boolean {
