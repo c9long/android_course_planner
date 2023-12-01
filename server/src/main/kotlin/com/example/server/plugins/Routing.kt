@@ -1,7 +1,10 @@
 package com.example.plugins
 
+import com.example.data.Course
 import com.example.data.CourseReview
-import com.example.data.FileDB
+import com.example.data.CourseSchedule
+import com.example.data.EnrollmentDB
+import com.example.data.FileFolderDB
 import com.example.data.ReviewDB
 import com.example.data.UserDB
 import io.ktor.http.HttpStatusCode
@@ -21,10 +24,24 @@ fun Application.configureRouting() {
 
     val userDB = UserDB()
     val reviewDB = ReviewDB()
-    val fileDB = FileDB()
+    val enrollmentDB = EnrollmentDB()
+    val fileFolderDB = FileFolderDB()
 
     @Serializable
     data class UserCredentials(val username: String, val password: String)
+
+    @Serializable
+    data class FileToFolderRequest(val folderId: Int, val fileName: String, val fileUri: String)
+
+    @Serializable
+    data class RenameFileRequest(val fileId: Int, val newName: String)
+
+    @Serializable
+    data class FolderRequest(val folderName: String)
+
+    @Serializable
+    data class RenameFolderRequest(val folderId: Int, val newName: String)
+
 
     routing {
         get("/") {
@@ -83,96 +100,102 @@ fun Application.configureRouting() {
             }
         }
 
-        route("/files") {
+        route("/enrollments") {
+            get("/{user}") {
+                val user = call.parameters["user"]
+                if (user.isNullOrBlank()) {
+                    call.respond(HttpStatusCode.BadRequest, "User parameter is missing")
+                    return@get
+                }
+
+                try {
+                    val enrollments = enrollmentDB.getAllEnrollments(user)
+                    call.respond(HttpStatusCode.OK, enrollments)
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, "Error fetching enrollments: ${e.message}")
+                }
+            }
+
             @Serializable
-            data class FileData(val fileName: String, val fileUri: String)
-            post("/add") {
-                val fileData = try {
-                    call.receive<FileData>()
+            data class EnrollmentRequest(val currentUser: String, val cs: CourseSchedule, val course: Course)
+            post("/addEnrollment") {
+                val enrollmentRequest = try {
+                    call.receive<EnrollmentRequest>()
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.BadRequest, "Invalid request format")
                     return@post
                 }
 
-                val fileAdded = fileDB.addFile(fileData.fileName, fileData.fileUri)
-                if (fileAdded) {
-                    call.respond(HttpStatusCode.OK, "File added successfully")
+                val enrollmentAdded = enrollmentDB.addEnrollment(enrollmentRequest.currentUser, enrollmentRequest.cs, enrollmentRequest.course)
+                if (enrollmentAdded) {
+                    call.respond(HttpStatusCode.OK, "Enrollment added successfully")
                 } else {
-                    call.respond(HttpStatusCode.InternalServerError, "Failed to add file")
+                    call.respond(HttpStatusCode.InternalServerError, "Failed to add enrollment")
                 }
             }
+        }
 
-            delete("/{fileId}") {
-                val fileId = call.parameters["fileId"]?.toIntOrNull()
-                if (fileId == null) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid file ID")
-                    return@delete
-                }
-
-                val fileDeleted = fileDB.deleteFile(fileId)
-                if (fileDeleted) {
-                    call.respond(HttpStatusCode.OK, "File deleted successfully")
-                } else {
-                    call.respond(HttpStatusCode.InternalServerError, "Failed to delete file")
-                }
+        route("/fileFolder") {
+            post("/addFileToFolder") {
+                val request = call.receive<FileToFolderRequest>()
+                val result = fileFolderDB.addFileToFolder(request.folderId, request.fileName, request.fileUri)
+                call.respond(HttpStatusCode.OK, result)
             }
 
-            get("path/{fileId}") {
-                val fileId = call.parameters["fileId"]?.toIntOrNull()
-                if (fileId == null) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid file ID")
-                    return@get
-                }
-
-                val filePath = fileDB.getFilePath(fileId)
-                if (filePath != null) {
-                    call.respond(HttpStatusCode.OK, filePath)
-                } else {
-                    call.respond(HttpStatusCode.NotFound, "File not found")
-                }
+            delete("/deleteFile/{fileId}") {
+                val fileId = call.parameters["fileId"]?.toInt() ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                val result = fileFolderDB.deleteFile(fileId)
+                call.respond(HttpStatusCode.OK, result)
             }
 
-            get("/getAll") {
-                val files = fileDB.getAllFiles()
-                call.respond(files)
+            get("/getFilesInFolder/{folderId}") {
+                val folderId = call.parameters["folderId"]?.toInt() ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val fileList = fileFolderDB.getFilesInFolder(folderId)
+                call.respond(HttpStatusCode.OK, fileList)
             }
 
-            @Serializable
-            data class NewFileName(val fileId: Int, val newName: String)
-            post("/rename") {
-                val newFileName = try {
-                    call.receive<NewFileName>()
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, "Invalid request format")
-                    return@post
-                }
-
-                println(newFileName.fileId)
-                println(newFileName.newName)
-
-                val fileRenamed = fileDB.renameFile(newFileName.fileId, newFileName.newName)
-                if (fileRenamed) {
-                    call.respond(HttpStatusCode.OK, "File renamed successfully")
-                } else {
-                    call.respond(HttpStatusCode.InternalServerError, "Failed to rename file")
-                }
+            post("/renameFile") {
+                val request = call.receive<RenameFileRequest>()
+                val result = fileFolderDB.renameFile(request.fileId, request.newName)
+                call.respond(HttpStatusCode.OK, result)
             }
 
-            get("/exists/{fileName}") {
-                val fileName = call.parameters["fileName"]
-                if (fileName.isNullOrBlank()) {
-                    call.respond(HttpStatusCode.BadRequest, "File name is required")
-                    return@get
-                }
-
-                val fileExists = fileDB.doesFileExist(fileName)
-                if (fileExists) {
-                    call.respond(HttpStatusCode.OK, "File exists")
-                }
-                else {
-                    call.respond(HttpStatusCode.InternalServerError, "File DNE")
-                }
+            get("/isFileExistInFolder/{folderId}/{fileName}") {
+                val folderId = call.parameters["folderId"]?.toInt() ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val fileName = call.parameters["fileName"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val exists = fileFolderDB.isFileExistInFolder(folderId, fileName)
+                call.respond(HttpStatusCode.OK, exists)
             }
+
+            post("/addFolder") {
+                val folderName = call.receive<FolderRequest>().folderName
+                val result = fileFolderDB.addFolder(folderName)
+                call.respond(HttpStatusCode.OK, result)
+            }
+
+            get("/getAllFolders") {
+                val folders = fileFolderDB.getAllFolders()
+                call.respond(HttpStatusCode.OK, folders)
+            }
+
+            delete("/deleteFolder/{folderId}") {
+                val folderId = call.parameters["folderId"]?.toInt() ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                val result = fileFolderDB.deleteFolder(folderId)
+                call.respond(HttpStatusCode.OK, result)
+            }
+
+            post("/renameFolder") {
+                val request = call.receive<RenameFolderRequest>()
+                val result = fileFolderDB.renameFolder(request.folderId, request.newName)
+                call.respond(HttpStatusCode.OK, result)
+            }
+
+            get("/folderNameExists/{folderName}") {
+                val folderName = call.parameters["folderName"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val exists = fileFolderDB.folderNameExists(folderName)
+                call.respond(HttpStatusCode.OK, exists)
+            }
+
         }
     }
 }

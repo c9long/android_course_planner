@@ -5,8 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Toast
@@ -33,7 +31,6 @@ import androidx.core.content.FileProvider
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
 
 
 class CourseMaterial : ComponentActivity() {
@@ -42,14 +39,15 @@ class CourseMaterial : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val userDBHelper = UserDBHelper(this)
+        val folderId = intent.getIntExtra("FOLDER_ID", -1)
+        val folderName = intent.getStringExtra("FOLDER_NAME") ?: "Default Folder"
 
         fun getFileNameFromUri(uri: Uri): String {
-            var name = "New file" // Default name if original name can't be found
+            var name = "New file" // Default name
             val cursor = contentResolver.query(uri, null, null, null, null)
 
             cursor?.use {
                 if (it.moveToFirst()) {
-                    // Get the column index of MediaStore.Images.Media.DISPLAY_NAME
                     val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     if (nameIndex >= 0) {
                         name = it.getString(nameIndex)
@@ -77,41 +75,17 @@ class CourseMaterial : ComponentActivity() {
 
         filePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
-                //val fileName = getFileNameFromUri(it)
-                //userDBHelper.addFile(fileName, it.toString())
-                //val intent = intent
-                //finish()
-                //startActivity(intent)
                 val context = this@CourseMaterial
                 val fileName = getFileNameFromUri(it)
-                userDBHelper.doesFileExist(fileName, object: ResponseCallback {
-                    override fun onSuccess(responseBody: String) {
-                        Handler(Looper.getMainLooper()).post {
-                            Toast.makeText(
-                                context,
-                                "A file with the same name already exists.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-
-                    override fun onFailure(e: IOException) {
-                        // File with the same name does not exist, proceed with copying
-                        val internalFilePath = copyFileToInternalStorage(context, it, fileName)
-                        userDBHelper.addFile(fileName, internalFilePath, object: ResponseCallback {
-                            override fun onSuccess(responseBody: String) {
-                                println("file added")
-                            }
-                            override fun onFailure(e: IOException) {
-                                println("file not added")
-                                e.printStackTrace()
-                            }
-                        }) // Store the internal path
-                        val intent = intent
-                        finish()
-                        startActivity(intent)
-                    }
-                })
+                if (userDBHelper.isFileExistInFolder(folderId, fileName)) {
+                    Toast.makeText(context, "A file with the same name already exists.", Toast.LENGTH_SHORT).show()
+                } else {
+                    val internalFilePath = copyFileToInternalStorage(context, it, fileName)
+                    userDBHelper.addFileToFolder(folderId, fileName, internalFilePath)
+                    val intent = intent
+                    finish()
+                    startActivity(intent)
+                }
             }
         }
 
@@ -121,7 +95,7 @@ class CourseMaterial : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    CourseMaterialPage(userDBHelper, filePickerLauncher)
+                    CourseMaterialPage(userDBHelper, filePickerLauncher, folderId, folderName)
                 }
             }
         }
@@ -134,21 +108,17 @@ class CourseMaterial : ComponentActivity() {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityResultLauncher<String>) {
+fun CourseMaterialPage(userDBHelper: UserDBHelper,
+                       filePickerLauncher: ActivityResultLauncher<String>,
+                       folderId: Int,
+                       folderName: String) {
     var fileList by remember { mutableStateOf(listOf<FileRecord>()) }
     var selectedFileForRename by remember { mutableStateOf<FileRecord?>(null) }
     var fileToDelete by remember { mutableStateOf<FileRecord?>(null) }
     val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
-        userDBHelper.getAllFiles() { allFiles, error ->
-            if (error != null) {
-                println("Error fetching reviews: ${error.message}")
-            } else if (allFiles != null) {
-                println("initial fetch of all files")
-                fileList = allFiles
-            }
-        }
+        fileList = userDBHelper.getFilesInFolder(folderId)
     }
 
     Scaffold(
@@ -166,13 +136,28 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
                 .padding(8.dp)
                 .verticalScroll(scrollState)
         ) {
-            fileList.forEach { file ->
-                FileFolderItem(
-                    fileName = file.name,
-                    fileUri = file.uri,
-                    onDelete = { fileToDelete = file },
-                    onRename = { selectedFileForRename = file }
+            Text(
+                text = folderName,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (fileList.isEmpty()) {
+                Text(
+                    text = "No course material has been added in $folderName.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(top = 20.dp)
                 )
+            } else {
+                fileList.forEach { file ->
+                    FileFolderItem(
+                        fileName = file.name,
+                        fileUri = file.uri,
+                        onDelete = { fileToDelete = file },
+                        onRename = { selectedFileForRename = file }
+                    )
+                }
             }
         }
     }
@@ -181,23 +166,10 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
         RenameFileDialog(
             initialName = selectedFileForRename!!.name,
             onRename = { newName ->
-                userDBHelper.renameFile(selectedFileForRename!!.id, newName, object: ResponseCallback {
-                    override fun onSuccess(responseBody: String) {
-                        userDBHelper.getAllFiles() { allFiles, error ->
-                            if (error != null) {
-                                println("Error fetching reviews: ${error.message}")
-                            } else if (allFiles != null) {
-                                println("update fetch of all files after renaming")
-                                fileList = allFiles
-                            }
-                        }
-                        selectedFileForRename = null
-                    }
-
-                    override fun onFailure(e: IOException) {
-                        e.printStackTrace()
-                    }
-                })
+                if (userDBHelper.renameFile(selectedFileForRename!!.id, newName)) {
+                    fileList = userDBHelper.getFilesInFolder(folderId)
+                    selectedFileForRename = null
+                }
             },
             onDismiss = { selectedFileForRename = null }
         )
@@ -210,35 +182,10 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
             text = { Text("Are you sure you want to delete \"${fileToDelete?.name}\"?")  },
             confirmButton = {
                 TextButton(onClick = {
-                    userDBHelper.getFilepath(fileToDelete!!.id, object: ResponseCallback{
-                        override fun onSuccess(responseBody: String) {
-                            val physicalFileToDelete = File(responseBody)
-                            if (!physicalFileToDelete.delete()) {
-                                Log.e("UserDBHelper", "Failed to delete file: $responseBody")
-                                return
-                            }
-                            userDBHelper.deleteFile(fileToDelete!!.id, object: ResponseCallback{
-                                override fun onSuccess(responseBody: String) {
-                                    userDBHelper.getAllFiles() { allFiles, error ->
-                                        if (error != null) {
-                                            println("Error fetching reviews: ${error.message}")
-                                        } else if (allFiles != null) {
-                                            println("updated fetch of all files after deletion")
-                                            fileList = allFiles
-                                        }
-                                    }
-                                    fileToDelete = null
-                                }
-
-                                override fun onFailure(e: IOException) {
-                                    e.printStackTrace()
-                                }
-                            })
-                        }
-                        override fun onFailure(e: IOException) {
-                            e.printStackTrace()
-                        }
-                    })
+                    if (userDBHelper.deleteFile(fileToDelete!!.id)) {
+                        fileList = userDBHelper.getFilesInFolder(folderId)
+                        fileToDelete = null
+                    }
                 }) {
                     Text("Delete")
                 }
@@ -254,7 +201,7 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
 
 @Composable
 fun FileFolderItem(fileName: String,
-                   fileUri: String, // Add this to pass the URI of the file
+                   fileUri: String,
                    onDelete: () -> Unit,
                    onRename: () -> Unit) {
     val context = LocalContext.current
@@ -273,7 +220,7 @@ fun FileFolderItem(fileName: String,
         ) {
             Text(text = fileName, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.weight(1f))
-            IconButton(onClick = onRename) { // Separate button for rename
+            IconButton(onClick = onRename) {
                 Icon(Icons.Default.Edit, "Rename")
             }
             IconButton(onClick = onDelete) {
@@ -288,7 +235,7 @@ fun FileFolderItem(fileName: String,
 @Composable
 fun RenameFileDialog(initialName: String, onRename: (String) -> Unit, onDismiss: () -> Unit) {
     var newName by remember { mutableStateOf(initialName) }
-    val maxLength = 20 // Maximum length for file name
+    val maxLength = 20
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -329,7 +276,7 @@ fun openPdfFile(context: Context, internalFilePath: String) {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(fileUri, "application/pdf")
             addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // Grant temporary read permission to the content URI
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         ContextCompat.startActivity(context, intent, null)
     } catch (e: Exception) {
@@ -337,5 +284,3 @@ fun openPdfFile(context: Context, internalFilePath: String) {
         Toast.makeText(context, "No application found to open PDF", Toast.LENGTH_SHORT).show()
     }
 }
-
-

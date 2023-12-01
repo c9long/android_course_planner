@@ -109,11 +109,12 @@ fun SignupPage() {
                                 e.printStackTrace()
                             }
                         })
+
                     }
                 },
                 modifier = Modifier
                     .weight(1f)
-                    .padding(8.dp) // Adjust the padding as needed
+                    .padding(8.dp)
             ) {
                 Text(text = "Sign Up", fontSize = 18.sp)
             }
@@ -124,7 +125,7 @@ fun SignupPage() {
                 },
                 modifier = Modifier
                     .weight(1f)
-                    .padding(8.dp) // Adjust the padding as needed
+                    .padding(8.dp)
             ) {
                 Text(text = "Back", fontSize = 18.sp)
             }
@@ -143,7 +144,9 @@ fun SignupPage() {
     }
 
     if (success) {
-        LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
+        val intent = Intent(LocalContext.current, HomePageActivity::class.java)
+        intent.putExtra("CURRENT_USER", username)
+        LocalContext.current.startActivity(intent)
         success = false
     }
 }

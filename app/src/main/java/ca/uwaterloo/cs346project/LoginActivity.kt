@@ -75,7 +75,7 @@ fun LoginPage() {
             text = "Course Planner",
             fontSize = 40.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF2196F3),
+            color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .padding(16.dp)
@@ -100,12 +100,11 @@ fun LoginPage() {
                 .padding(8.dp),
             label = { Text("Password") },
             singleLine = true,
-            visualTransformation = PasswordVisualTransformation() // Hide the password
+            visualTransformation = PasswordVisualTransformation()
         )
 
         Button(
             onClick = {
-                // Handle login action here
                 keyboardController?.hide()
                 dbHelper.validateUser(username, password, object : ResponseCallback {
                     override fun onSuccess(responseBody: String) {
@@ -128,7 +127,7 @@ fun LoginPage() {
         if (errorMessage.isNotEmpty()) {
             Text(
                 text = errorMessage,
-                color = Color.Red, // You can set the color to indicate an error
+                color = Color.Red,
                 modifier = Modifier.padding(8.dp)
             )
         }

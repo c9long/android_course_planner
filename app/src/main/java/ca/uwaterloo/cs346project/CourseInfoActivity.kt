@@ -32,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
 import kotlinx.serialization.Serializable
 import java.io.IOException
@@ -58,17 +59,17 @@ class CourseInfoActivity : ComponentActivity() {
                     val courseCode = intent.getStringExtra("COURSE_CODE") ?: ""
                     val courseName = intent.getStringExtra("COURSE_NAME") ?: ""
                     val courseDescription = intent.getStringExtra("COURSE_DESCRIPTION") ?: ""
-                    val instructorName = intent.getStringExtra("INSTRUCTOR_NAME") ?: ""
-                    //val courseOfferings = intent.getStringArrayListExtra("COURSE_OFFERING") ?: emptyList()
                     var courseOfferings: List<CourseSchedule>
                     try {
+                        println(courseCode)
                         courseOfferings = UWAPIHelper.getCourseScheduleData(courseCode)
                     } catch (e: Exception) {
+                        println("error")
                         courseOfferings = listOf(CourseSchedule(noOfferings, 0, 0, "", "", ""))
                     }
 
                     CourseInfoScreen(
-                        currentlyLoggedInUser, courseCode, courseName, courseDescription, instructorName,
+                        currentlyLoggedInUser, courseCode, courseName, courseDescription,
                         courseOfferings, onBackButtonClick = { navigateBackToMainActivity(currentlyLoggedInUser) }
                     )
                 }
@@ -95,11 +96,12 @@ fun CourseInfoScreen(
     courseCode: String,
     courseName: String,
     courseDescription: String,
-    instructorName: String,
     courseOfferings: List<CourseSchedule>,
     onBackButtonClick: () -> Unit,
 ) {
+    var showToast by remember { mutableStateOf(false) }
     var allReviews by remember { mutableStateOf<List<CourseReview>?>(null) }
+
     MaterialTheme (
         typography = Typography(),
         shapes = Shapes()
@@ -118,18 +120,25 @@ fun CourseInfoScreen(
                 overflow = TextOverflow.Ellipsis
             )
             Text(text = courseDescription, style = MaterialTheme.typography.bodySmall)
-            Text(
-                text = "Instructor: $instructorName",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+//            Text(
+//                text = "Instructor: $instructorName",
+//                style = MaterialTheme.typography.bodyMedium,
+//                color = MaterialTheme.colorScheme.secondary,
+//                modifier = Modifier.padding(bottom = 8.dp)
+//            )
 
             Text(
                 text = "Course Offerings:",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary
             )
+
+            if (showToast) {
+                Toast("Course added!") {
+                    // Dismiss the toast when clicked
+                    showToast = false
+                }
+            }
 
             courseOfferings.forEachIndexed { index, offering ->
                 val text: String
@@ -144,6 +153,11 @@ fun CourseInfoScreen(
                         .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    val course = Course(courseCode, courseName, courseDescription)
+                    AddCourseButton(currentlyLoggedInUser, offering, course) {
+                        // Set the state to show the toast
+                        showToast = true
+                    }
                     Text(text = offering.section, style = MaterialTheme.typography.bodySmall)
                     Text(
                         text = text,
@@ -183,6 +197,7 @@ fun CourseInfoScreen(
                                 println("failed to add review")
                             }
                         })
+
                     }
                 )
             }
@@ -205,6 +220,7 @@ fun CourseInfoScreen(
                 Text("Loading reviews...")
             }
 
+
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -219,6 +235,46 @@ fun CourseInfoScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AddCourseButton(currUser: String, cs: CourseSchedule, course: Course, onClick: () -> Unit) {
+    // Material Design button that triggers the custom toast when clicked
+    val dbHelper = UserDBHelper(LocalContext.current)
+    Button(
+        onClick = {
+            onClick()
+            dbHelper.addEnrollment(currUser, cs, course, object: ResponseCallback {
+                override fun onSuccess(responseBody: String) {
+                    println("Successfully added enrollment")
+                }
+
+                override fun onFailure(e: IOException) {
+                    println("Enrollment not added")
+                }
+            })
+        },
+        modifier = Modifier.padding(0.dp)
+    ) {
+        Text(
+            text = "Add to calendar",
+            fontSize = 12.sp
+        )
+    }
+}
+@Composable
+fun Toast(message: String, onDismiss: () -> Unit) {
+    // A custom toast-like composable
+    Card(
+        modifier = Modifier
+            .padding(16.dp)
+            .clickable {
+                // Call the onDismiss function when the toast is clicked
+                onDismiss()
+            }
+    ) {
+        Text(message, modifier = Modifier.padding(16.dp))
     }
 }
 

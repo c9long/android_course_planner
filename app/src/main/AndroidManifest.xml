@@ -86,6 +86,14 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity android:name=".CourseMaterialFolder"
+                  android:exported="true"
+                  android:theme="@style/Theme.Cs346project">
+            <intent-filter>
+                <action android:name="com.example.action.CourseMaterialFolder" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name=".CourseMaterial"
                   android:exported="true"
                   android:theme="@style/Theme.Cs346project">
@@ -94,6 +102,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
 
         <provider
                 android:name="androidx.core.content.FileProvider"
