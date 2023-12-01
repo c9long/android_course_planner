@@ -37,6 +37,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ReadSettings() {
     val file = File(LocalContext.current.filesDir, "settings.json")
+    if (!file.isFile) WriteSettings() // Settings don't exist, write default
     val stream = ObjectInputStream(file.inputStream())
 
     MainActivity.settings = stream.readObject() as MainActivity.Companion.UserSettingsData
