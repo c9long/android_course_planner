@@ -13,7 +13,7 @@ data class FileRecord(var id: Int, var name: String, var uri: String)
 class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
         private const val DATABASE_NAME = "UserDatabase.db"
 
         private const val TABLE_USERS = "users"
@@ -35,6 +35,7 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
 
         private const val TABLE_ENROLLMENTS = "enrollments"
         private const val COLUMN_ENROLLMENT_USER = "username"
+        private const val COLUMN_ENROLLMENT_DAY = "enrollment_day"
         private const val COLUMN_ENROLLMENT_START = "enrollment_start"
         private const val COLUMN_ENROLLMENT_END = "enrollment_end"
         private const val COLUMN_ENROLLMENT_CODE = "enrollment_code"
@@ -73,6 +74,7 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
                 "$COLUMN_ENROLLMENT_USER TEXT," +
                 "$COLUMN_ENROLLMENT_CODE TEXT," +
                 "$COLUMN_ENROLLMENT_DESC TEXT," +
+                "$COLUMN_ENROLLMENT_DAY TEXT," +
                 "$COLUMN_ENROLLMENT_START TEXT," +
                 "$COLUMN_ENROLLMENT_END TEXT," +
                 "FOREIGN KEY($COLUMN_ENROLLMENT_USER) REFERENCES $TABLE_USERS($COLUMN_USERNAME)," +
@@ -95,6 +97,7 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         db.execSQL("DROP TABLE IF EXISTS $TABLE_USERS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_COURSE_REVIEWS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_COURSES")
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_ENROLLMENTS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_FILES")
         onCreate(db)
     }
@@ -310,7 +313,7 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         val query = "$COLUMN_ENROLLMENT_USER='$currentUser'"
         val cursor = db.query(
             TABLE_ENROLLMENTS,
-            arrayOf(COLUMN_ENROLLMENT_CODE, COLUMN_ENROLLMENT_START, COLUMN_ENROLLMENT_END, COLUMN_ENROLLMENT_DESC),
+            arrayOf(COLUMN_ENROLLMENT_CODE, COLUMN_ENROLLMENT_DAY, COLUMN_ENROLLMENT_START, COLUMN_ENROLLMENT_END, COLUMN_ENROLLMENT_DESC),
             query,
             arrayOf(),
             null, null, null, null
@@ -318,17 +321,63 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         val ret: MutableList<Event> = mutableListOf()
         while (cursor.moveToNext()) {
             val codeIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_CODE)
+            val dayIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_DAY)
             val startIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_START)
             val endIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_END)
             val descIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_DESC)
 
             if (codeIdx != -1 && startIdx != -1 && endIdx != -1 && descIdx != -1) {
                 val code = cursor.getString(codeIdx)
-                val start = LocalDateTime.parse(cursor.getString(startIdx))
-                val end = LocalDateTime.parse(cursor.getString(endIdx))
+                val day = cursor.getString(dayIdx)
+                var start = LocalDateTime.parse(cursor.getString(startIdx))
+                var end = LocalDateTime.parse(cursor.getString(endIdx))
                 val desc = cursor.getString(descIdx)
 
-                ret.add(Event(code, start, end, desc))
+                for (char in day) {
+                    when (char) {
+                        'M' -> {
+                            start = start.withYear(2023)
+                            start = start.withMonth(5)
+                            start = start.withDayOfMonth(15)
+                            end = end.withYear(2023)
+                            end = end.withMonth(5)
+                            end = end.withDayOfMonth(15)
+                        }
+                        'T' -> {
+                            start = start.withYear(2023)
+                            start = start.withMonth(5)
+                            start = start.withDayOfMonth(16)
+                            end = end.withYear(2023)
+                            end = end.withMonth(5)
+                            end = end.withDayOfMonth(16)
+                        }
+                        'W' -> {
+                            start = start.withYear(2023)
+                            start = start.withMonth(5)
+                            start = start.withDayOfMonth(17)
+                            end = end.withYear(2023)
+                            end = end.withMonth(5)
+                            end = end.withDayOfMonth(17)
+                        }
+                        'R' -> {
+                            start = start.withYear(2023)
+                            start = start.withMonth(5)
+                            start = start.withDayOfMonth(18)
+                            end = end.withYear(2023)
+                            end = end.withMonth(5)
+                            end = end.withDayOfMonth(18)
+                        }
+                        'F' -> {
+                            start = start.withYear(2023)
+                            start = start.withMonth(5)
+                            start = start.withDayOfMonth(19)
+                            end = end.withYear(2023)
+                            end = end.withMonth(5)
+                            end = end.withDayOfMonth(19)
+                        }
+                    }
+                    ret.add(Event(code, start, end, desc))
+                }
             }
         }
 
@@ -344,12 +393,14 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
             put(COLUMN_ENROLLMENT_USER, currentUser)
             put(COLUMN_ENROLLMENT_CODE, course.code)
             put(COLUMN_ENROLLMENT_DESC, course.description)
+            put(COLUMN_ENROLLMENT_DAY, cs.meetDays)
             put(COLUMN_ENROLLMENT_START, cs.meetStart)
             put(COLUMN_ENROLLMENT_END, cs.meetEnd)
         }
 
         val result = db.insert(TABLE_ENROLLMENTS, null, value)
         db.close()
+
         return result != -1L
     }
 

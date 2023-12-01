@@ -1,7 +1,9 @@
 package ca.uwaterloo.cs346project
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -40,6 +42,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startActivity
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -53,10 +57,10 @@ import kotlin.math.roundToInt
 
 data class Event(
     val name: String,
-    val start: LocalDateTime,
-    val end: LocalDateTime,
+    var start: LocalDateTime,
+    var end: LocalDateTime,
     val description: String? = null,
-    val color: Color = Color.Blue,
+    val color: Color = Color(0xFFe6be8a),
 )
 
 val EventTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -150,6 +154,7 @@ class ScheduleActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+
             Cs346projectTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -157,6 +162,7 @@ class ScheduleActivity : ComponentActivity() {
                 ) {
                     Cs346projectTheme {
                         val currUser = intent.getStringExtra("CURRENT_USER") ?: ""
+                        println(currUser)
                         val sampleEvents = CreateEventList(currUser)
                         Schedule(sampleEvents)
                     }
@@ -177,7 +183,6 @@ fun BasicSchedule(
     hourHeight: Dp,
 ) {
     val numDays = ChronoUnit.DAYS.between(minDate, maxDate).toInt() + 1
-    println(numDays)
     Layout(
         content = {
             events.sortedBy(Event::start).forEach { event ->
@@ -252,24 +257,12 @@ fun ScheduleHeader(
 }
 
 @Composable
-@Preview
-fun ScheduleHeaderPreview() {
-    Cs346projectTheme {
-        ScheduleHeader(
-            minDate = LocalDate.now(),
-            maxDate = LocalDate.now().plusDays(5),
-            dayWidth = 256.dp,
-        )
-    }
-}
-
-@Composable
 fun Schedule(
     events: List<Event>,
     modifier: Modifier = Modifier,
     eventContent: @Composable (event: Event) -> Unit = { BasicEvent(event = it) },
-    minDate: LocalDate = events.minByOrNull(Event::start)!!.start.toLocalDate(),
-    maxDate: LocalDate = events.maxByOrNull(Event::end)!!.end.toLocalDate(),
+    minDate: LocalDate = LocalDateTime.parse("2023-05-14T00:00:00").toLocalDate(),
+    maxDate: LocalDate = minDate.plusDays(6),
 ) {
     val dayWidth = 256.dp
     val hourHeight = 64.dp

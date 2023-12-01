@@ -49,7 +49,6 @@ fun HomePage(currentlyLoggedInUser: String) {
     var showColumn3 by remember { mutableStateOf(false) }
     var showColumn4 by remember { mutableStateOf(false) }
 
-
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -116,6 +115,7 @@ fun HomePage(currentlyLoggedInUser: String) {
     if (showColumn1) {
         val context = LocalContext.current
         val scheduleIntent = Intent(context, ScheduleActivity::class.java)
+        scheduleIntent.putExtra("CURRENT_USER", currentlyLoggedInUser)
         context.startActivity(scheduleIntent)
         showColumn1 = false
     }
