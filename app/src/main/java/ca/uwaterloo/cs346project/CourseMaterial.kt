@@ -1,12 +1,12 @@
 package ca.uwaterloo.cs346project
 
 import android.annotation.SuppressLint
-import android.app.ProgressDialog.show
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Toast
@@ -33,6 +33,7 @@ import androidx.core.content.FileProvider
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 
 
 class CourseMaterial : ComponentActivity() {
@@ -83,17 +84,34 @@ class CourseMaterial : ComponentActivity() {
                 //startActivity(intent)
                 val context = this@CourseMaterial
                 val fileName = getFileNameFromUri(it)
-                if (userDBHelper.isFileExist(fileName)) {
-                    // Show an alert dialog
-                    Toast.makeText(context, "A file with the same name already exists.", Toast.LENGTH_SHORT).show()
-                } else {
-                    // File with the same name does not exist, proceed with copying
-                    val internalFilePath = copyFileToInternalStorage(context, it, fileName)
-                    userDBHelper.addFile(fileName, internalFilePath) // Store the internal path
-                    val intent = intent
-                    finish()
-                    startActivity(intent)
-                }
+                userDBHelper.doesFileExist(fileName, object: ResponseCallback {
+                    override fun onSuccess(responseBody: String) {
+                        Handler(Looper.getMainLooper()).post {
+                            Toast.makeText(
+                                context,
+                                "A file with the same name already exists.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+
+                    override fun onFailure(e: IOException) {
+                        // File with the same name does not exist, proceed with copying
+                        val internalFilePath = copyFileToInternalStorage(context, it, fileName)
+                        userDBHelper.addFile(fileName, internalFilePath, object: ResponseCallback {
+                            override fun onSuccess(responseBody: String) {
+                                println("file added")
+                            }
+                            override fun onFailure(e: IOException) {
+                                println("file not added")
+                                e.printStackTrace()
+                            }
+                        }) // Store the internal path
+                        val intent = intent
+                        finish()
+                        startActivity(intent)
+                    }
+                })
             }
         }
 
@@ -123,7 +141,14 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
     val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
-        fileList = userDBHelper.getAllFiles()
+        userDBHelper.getAllFiles() { allFiles, error ->
+            if (error != null) {
+                println("Error fetching reviews: ${error.message}")
+            } else if (allFiles != null) {
+                println("initial fetch of all files")
+                fileList = allFiles
+            }
+        }
     }
 
     Scaffold(
@@ -156,10 +181,23 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
         RenameFileDialog(
             initialName = selectedFileForRename!!.name,
             onRename = { newName ->
-                if (userDBHelper.renameFile(selectedFileForRename!!.id, newName)) {
-                    fileList = userDBHelper.getAllFiles() // Refresh the list from the database
-                    selectedFileForRename = null
-                }
+                userDBHelper.renameFile(selectedFileForRename!!.id, newName, object: ResponseCallback {
+                    override fun onSuccess(responseBody: String) {
+                        userDBHelper.getAllFiles() { allFiles, error ->
+                            if (error != null) {
+                                println("Error fetching reviews: ${error.message}")
+                            } else if (allFiles != null) {
+                                println("update fetch of all files after renaming")
+                                fileList = allFiles
+                            }
+                        }
+                        selectedFileForRename = null
+                    }
+
+                    override fun onFailure(e: IOException) {
+                        e.printStackTrace()
+                    }
+                })
             },
             onDismiss = { selectedFileForRename = null }
         )
@@ -172,10 +210,35 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
             text = { Text("Are you sure you want to delete \"${fileToDelete?.name}\"?")  },
             confirmButton = {
                 TextButton(onClick = {
-                    if (userDBHelper.deleteFile(fileToDelete!!.id)) {
-                        fileList = userDBHelper.getAllFiles() // Refresh the list after deletion
-                        fileToDelete = null
-                    }
+                    userDBHelper.getFilepath(fileToDelete!!.id, object: ResponseCallback{
+                        override fun onSuccess(responseBody: String) {
+                            val physicalFileToDelete = File(responseBody)
+                            if (!physicalFileToDelete.delete()) {
+                                Log.e("UserDBHelper", "Failed to delete file: $responseBody")
+                                return
+                            }
+                            userDBHelper.deleteFile(fileToDelete!!.id, object: ResponseCallback{
+                                override fun onSuccess(responseBody: String) {
+                                    userDBHelper.getAllFiles() { allFiles, error ->
+                                        if (error != null) {
+                                            println("Error fetching reviews: ${error.message}")
+                                        } else if (allFiles != null) {
+                                            println("updated fetch of all files after deletion")
+                                            fileList = allFiles
+                                        }
+                                    }
+                                    fileToDelete = null
+                                }
+
+                                override fun onFailure(e: IOException) {
+                                    e.printStackTrace()
+                                }
+                            })
+                        }
+                        override fun onFailure(e: IOException) {
+                            e.printStackTrace()
+                        }
+                    })
                 }) {
                     Text("Delete")
                 }

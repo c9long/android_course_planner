@@ -17,4 +17,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "cs346-project"
-include(":app")
+include("app", "server")

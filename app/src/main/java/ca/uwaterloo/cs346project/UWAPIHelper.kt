@@ -2,14 +2,12 @@ package ca.uwaterloo.cs346project
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -53,11 +51,14 @@ object UWAPIHelper: ViewModel() {
 
     fun apiGet(path: String): String {
         return runBlocking {
-            val client = HttpClient(CIO)
-            val response: HttpResponse = client.get("https://openapi.data.uwaterloo.ca$path") {
-                header("x-api-key", "95808C46CE8F460FA23F6EAC00316045")
+            val client = OkHttpClient()
+            val request = Request.Builder()
+                .url("https://openapi.data.uwaterloo.ca$path")
+                .header("x-api-key", "95808C46CE8F460FA23F6EAC00316045")
+                .build()
+            client.newCall(request).execute().use { response ->
+                return@runBlocking response.body!!.string()
             }
-            return@runBlocking response.bodyAsText()
         }
     }
 

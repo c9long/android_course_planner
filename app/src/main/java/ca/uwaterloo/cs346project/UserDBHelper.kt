@@ -1,12 +1,27 @@
 package ca.uwaterloo.cs346project
 
-import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
-import java.io.File
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import java.io.IOException
 
+interface ResponseCallback {
+    fun onSuccess(responseBody: String)
+    fun onFailure(e: IOException)
+}
+
+@Serializable
 data class FileRecord(var id: Int, var name: String, var uri: String)
 
 class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
@@ -80,300 +95,190 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         onCreate(db)
     }
 
-    fun addUser(username: String, password: String): Boolean {
-        val db = this.writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_USERNAME, username)
-            put(COLUMN_PASSWORD, password) // Hash the password before storing
-        }
-
-        val result = db.insert(TABLE_USERS, null, values)
-        db.close()
-        return result != -1L
-    }
-
-    fun checkUser(username: String): Boolean {
-        val db = this.readableDatabase
-        val cursor = db.query(
-            TABLE_USERS, arrayOf(COLUMN_ID),
-            "$COLUMN_USERNAME=?", arrayOf(username),
-            null, null, null
-        )
-
-        val userExists = cursor.count > 0
-        cursor.close()
-        db.close()
-        return userExists
-    }
-
-    fun validateUser(username: String, password: String): Boolean {
-        val hashedPassword = hashPassword(password) // Hash the password before checking
-        val db = this.readableDatabase
-        val cursor = db.query(
-            TABLE_USERS, arrayOf(COLUMN_ID),
-            "$COLUMN_USERNAME=? AND $COLUMN_PASSWORD=?", arrayOf(username, hashedPassword),
-            null, null, null
-        )
-
-        val isValidUser = cursor.count > 0
-        cursor.close()
-        db.close()
-        return isValidUser
-    }
-
-    fun addReview(courseReview: CourseReview): Boolean {
-        val db = this.writableDatabase
-        val cursor = db.query(
-            TABLE_USERS,
-            arrayOf(COLUMN_ID),
-            "$COLUMN_USERNAME=?",
-            arrayOf(courseReview.reviewer),
-            null, null, null
-        )
-
-        val userId: Int = if (cursor.moveToFirst()) {
-            val columnIndex = cursor.getColumnIndex(COLUMN_ID)
-            if (columnIndex != -1) {
-                cursor.getInt(columnIndex)
-            } else {
-                -1 // Handle the case where COLUMN_ID is not found
-            }
-        } else {
-            -1 // User not found, return -1 as an error indicator
-        }
-
-        cursor.close()
-
-        if (userId != -1) {
-            val values = ContentValues().apply {
-                put(COLUMN_USER_ID, userId)
-                put(COLUMN_COURSE_CODE, courseReview.courseCode)
-                put(COLUMN_REVIEW_DATE, courseReview.date)
-                put(COLUMN_CONTENT, courseReview.content)
-                put(COLUMN_RATING, courseReview.stars)
+    private fun createOkHttpCallback(callback: ResponseCallback): Callback {
+        return object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                callback.onFailure(e)
             }
 
-            val result = db.insert(TABLE_COURSE_REVIEWS, null, values)
-            db.close()
-            return result != -1L
-        } else {
-            // User not found, cannot add review
-            db.close()
-            return false
-        }
-    }
-
-    fun getAllReviews(): List<CourseReview> {
-        val reviews = mutableListOf<CourseReview>()
-
-        val tableExistsQuery =
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='$TABLE_COURSE_REVIEWS'"
-        val db = this.readableDatabase
-        val cursor = db.rawQuery(tableExistsQuery, null)
-
-        if (cursor != null) {
-            if (cursor.count > 0) {
-                // Query to retrieve all reviews with their corresponding usernames
-                val query = "SELECT $TABLE_COURSE_REVIEWS.$COLUMN_REVIEW_DATE, " +
-                        "$TABLE_COURSE_REVIEWS.$COLUMN_COURSE_CODE, " +
-                        "$TABLE_COURSE_REVIEWS.$COLUMN_CONTENT, " +
-                        "$TABLE_COURSE_REVIEWS.$COLUMN_RATING, " +
-                        "$TABLE_USERS.$COLUMN_USERNAME " +
-                        "FROM $TABLE_COURSE_REVIEWS " +
-                        "INNER JOIN $TABLE_USERS " +
-                        "ON $TABLE_COURSE_REVIEWS.$COLUMN_USER_ID = $TABLE_USERS.$COLUMN_ID " +
-                        "ORDER BY $TABLE_COURSE_REVIEWS.$COLUMN_RATING DESC"
-
-                val reviewCursor = db.rawQuery(query, null)
-
-                if (reviewCursor != null) {
-                    while (reviewCursor.moveToNext()) {
-                        val usernameCol = reviewCursor.getColumnIndex(COLUMN_USERNAME)
-                        val codeCol = reviewCursor.getColumnIndex(COLUMN_COURSE_CODE)
-                        val reviewDateCol = reviewCursor.getColumnIndex(COLUMN_REVIEW_DATE)
-                        val contentCol = reviewCursor.getColumnIndex(COLUMN_CONTENT)
-                        val ratingCol = reviewCursor.getColumnIndex(COLUMN_RATING)
-                        if (reviewDateCol == -1 || codeCol == -1 || contentCol == -1 || ratingCol == -1 || usernameCol == -1) {
-                            break
-                        }
-                        val username = reviewCursor.getString(usernameCol)
-                        val courseCode = reviewCursor.getString(codeCol)
-                        val reviewDate = reviewCursor.getString(reviewDateCol)
-                        val content = reviewCursor.getString(contentCol)
-                        val rating = reviewCursor.getInt(ratingCol)
-
-                        // Create a CourseReview object and add it to the list
-                        val review = CourseReview(username, courseCode, reviewDate, content, rating)
-                        reviews.add(review)
+            override fun onResponse(call: Call, response: Response) {
+                response.use {
+                    if (!response.isSuccessful) {
+                        callback.onFailure(IOException("Unexpected code $response"))
+                    } else {
+                        response.body?.string()?.let {
+                            callback.onSuccess(it)
+                        } ?: callback.onFailure(IOException("Response body is null"))
                     }
                 }
-                reviewCursor.close()
             }
         }
-
-        cursor.close()
-        db.close()
-
-        return reviews
     }
 
-    fun getAllReviewsFrom(courseCode: String): List<CourseReview> {
-        val db = this.readableDatabase
-        val cursor = db.rawQuery(
-            "SELECT $COLUMN_USERNAME, $COLUMN_REVIEW_DATE, $COLUMN_CONTENT, $COLUMN_RATING " +
-                    "FROM $TABLE_COURSE_REVIEWS INNER JOIN $TABLE_USERS " +
-                    "ON $TABLE_COURSE_REVIEWS.$COLUMN_USER_ID = $TABLE_USERS.$COLUMN_ID " +
-                    "WHERE $COLUMN_COURSE_CODE = '" + courseCode + "' " +
-                    "ORDER BY $TABLE_COURSE_REVIEWS.$COLUMN_RATING DESC", null)
+    fun addUser(username: String, password: String, callback: ResponseCallback) {
+        val client = OkHttpClient()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+        val json = "{\"username\":\"$username\", \"password\":\"$password\"}"
+        val body = json.toRequestBody(mediaType)
+        val request = Request.Builder()
+            .url("http://10.0.2.2:8080/users/add")
+            .post(body)
+            .build()
 
-        // Add courses to list
-        val ret: MutableList<CourseReview> = mutableListOf()
-        while (cursor.moveToNext()) {
-            val usernameCol = cursor.getColumnIndex(COLUMN_USERNAME)
-            val reviewDateCol = cursor.getColumnIndex(COLUMN_REVIEW_DATE)
-            val contentCol = cursor.getColumnIndex(COLUMN_CONTENT)
-            val ratingCol = cursor.getColumnIndex(COLUMN_RATING)
-            if (reviewDateCol == -1 || contentCol == -1 || ratingCol == -1 || usernameCol == -1) {
-                break
+        client.newCall(request).enqueue(createOkHttpCallback(callback))
+    }
+
+    fun validateUser(username: String, password: String, callback: ResponseCallback) {
+        val client = OkHttpClient()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+        val json = "{\"username\":\"$username\", \"password\":\"$password\"}"
+        val body = json.toRequestBody(mediaType)
+        val request = Request.Builder()
+            .url("http://10.0.2.2:8080/users/validate")
+            .post(body)
+            .build()
+
+        client.newCall(request).enqueue(createOkHttpCallback(callback))
+    }
+
+    fun addReview(courseReview: CourseReview, callback: ResponseCallback) {
+        val client = OkHttpClient()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+        val json = "{\"reviewer\":\"${courseReview.reviewer}\", \"courseCode\":\"${courseReview.courseCode}\"," +
+                "\"date\":\"${courseReview.date}\", \"stars\":\"${courseReview.stars}\"," +
+                "\"content\":\"${courseReview.content}\"}"
+        val body = json.toRequestBody(mediaType)
+        val request = Request.Builder()
+            .url("http://10.0.2.2:8080/reviews/add")
+            .post(body)
+            .build()
+
+        client.newCall(request).enqueue(createOkHttpCallback(callback))
+    }
+
+    fun getAllReviewsFrom(courseCode: String, callback: (List<CourseReview>?, IOException?) -> Unit) {
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url("http://10.0.2.2:8080/reviews/$courseCode")
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                callback(null, e)
             }
-            val username = cursor.getString(usernameCol)
-            val reviewDate = cursor.getString(reviewDateCol)
-            val content = cursor.getString(contentCol)
-            val rating = cursor.getInt(ratingCol)
 
-            // Create a CourseReview object and add it to the list
-            val review = CourseReview(username, courseCode, reviewDate, content, rating)
-            ret.add(review)
-        }
-
-        cursor.close()
-        db.close()
-        return ret
-    }
-
-    fun addCourse(course: Course): Boolean {
-        val db = this.writableDatabase
-
-        val value = ContentValues().apply {
-            put(COLUMN_COURSE_CODE, course.code)
-            put(COLUMN_COURSE_NAME, course.title)
-            put(COLUMN_COURSE_DESC, course.description)
-        }
-
-        val result = db.insert(TABLE_COURSES, null, value)
-        db.close()
-        return result != -1L
-    }
-
-    fun getAllCourses(): List<Course> {
-        val db = this.readableDatabase
-        val cursor = db.query(
-            TABLE_COURSES,
-            arrayOf(COLUMN_COURSE_CODE, COLUMN_COURSE_NAME, COLUMN_COURSE_DESC),
-            "",
-            arrayOf(),
-            null, null, null
-        )
-
-        // Add courses to list
-        val ret: MutableList<Course> = mutableListOf()
-        while (cursor.moveToNext()) {
-            ret.add(Course(cursor.getString(0), cursor.getString(1), cursor.getString(2)))
-        }
-
-        cursor.close()
-        db.close()
-        return ret
-    }
-
-    fun addFile(fileName: String, fileUri: String): Boolean {
-        val db = this.writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_FILE_NAME, fileName)
-            put(COLUMN_FILE_URI, fileUri) // Store the URI
-        }
-
-        val result = db.insert(TABLE_FILES, null, values)
-        db.close()
-        return result != -1L
-    }
-
-    //fun deleteFile(fileId: Int): Boolean {
-    //    val db = this.writableDatabase
-    //    val result = db.delete(TABLE_FILES, "$COLUMN_FILE_ID = ?", arrayOf(fileId.toString()))
-    //    db.close()
-    //    return result > 0
-    //}
-
-    fun deleteFile(fileId: Int): Boolean {
-        val db = this.readableDatabase
-        val cursor = db.query(
-            TABLE_FILES, arrayOf(COLUMN_FILE_URI),
-            "$COLUMN_FILE_ID = ?", arrayOf(fileId.toString()),
-            null, null, null
-        )
-
-        var filePath = ""
-        if (cursor.moveToFirst()) {
-            filePath = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FILE_URI))
-        }
-        cursor.close()
-
-        if (filePath.isNotEmpty()) {
-            val fileToDelete = File(filePath)
-            if (!fileToDelete.delete()) {
-                Log.e("UserDBHelper", "Failed to delete file: $filePath")
+            @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+            override fun onResponse(call: Call, response: Response) {
+                response.use {
+                    if (it.isSuccessful) {
+                        val responseBody = it.body?.string()
+                        if (responseBody != null) {
+                            try {
+                                val reviews = Json.decodeFromString<List<CourseReview>>(responseBody)
+                                callback(reviews, null)
+                            } catch (e: SerializationException) {
+                                callback(null, IOException("Serialization error: ${e.message}"))
+                            } catch (e: Exception) {
+                                callback(null, IOException("General error: ${e.message}"))
+                            }
+                        } else {
+                            callback(null, IOException("Response body is null"))
+                        }
+                    } else {
+                        callback(null, IOException("Unexpected code $response"))
+                    }
+                }
             }
-        }
-
-        // Now delete the record from the database
-        db.close()
-        val dbWrite = this.writableDatabase
-        val result = dbWrite.delete(TABLE_FILES, "$COLUMN_FILE_ID = ?", arrayOf(fileId.toString()))
-        dbWrite.close()
-
-        return result > 0
+        })
     }
 
+    fun addFile(fileName: String, fileUri: String, callback: ResponseCallback) {
+        val client = OkHttpClient()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+        val json = "{\"fileName\":\"$fileName\", \"fileUri\":\"$fileUri\"}"
+        val body = json.toRequestBody(mediaType)
+        val request = Request.Builder()
+            .url("http://10.0.2.2:8080/files/add")
+            .post(body)
+            .build()
 
-    fun getAllFiles(): List<FileRecord> {
-        val fileList = mutableListOf<FileRecord>()
-        val db = this.readableDatabase
-        val cursor = db.query(TABLE_FILES, null, null, null, null, null, null)
-
-        if (cursor.moveToFirst()) {
-            do {
-                val fileId = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_FILE_ID))
-                val fileName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FILE_NAME))
-                val fileUri = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FILE_URI)) // Retrieve the URI
-                fileList.add(FileRecord(fileId, fileName, fileUri)) // Include the URI in the FileRecord
-            } while (cursor.moveToNext())
-        }
-        cursor.close()
-        db.close()
-        return fileList
+        client.newCall(request).enqueue(createOkHttpCallback(callback))
     }
 
-    fun renameFile(fileId: Int, newName: String): Boolean {
-        val db = this.writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_FILE_NAME, newName)
-        }
-        val result = db.update(TABLE_FILES, values, "$COLUMN_FILE_ID = ?", arrayOf(fileId.toString()))
-        db.close()
-        return result > 0
+    fun deleteFile(fileId: Int, callback: ResponseCallback) {
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url("http://10.0.2.2:8080/files/$fileId") // Replace with your server URL
+            .delete()
+            .build()
+
+        client.newCall(request).enqueue(createOkHttpCallback(callback))
     }
 
-    fun isFileExist(fileName: String): Boolean {
-        val db = this.readableDatabase
-        val cursor = db.query(
-            TABLE_FILES, arrayOf(COLUMN_FILE_ID),
-            "$COLUMN_FILE_NAME = ?", arrayOf(fileName),
-            null, null, null
-        )
-        val fileExists = cursor.count > 0
-        cursor.close()
-        db.close()
-        return fileExists
+    fun getFilepath(fileId: Int, callback: ResponseCallback) {
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url("http://10.0.2.2:8080/files/path/$fileId") // Replace with your server URL
+            .get()
+            .build()
+
+        client.newCall(request).enqueue(createOkHttpCallback(callback))
+    }
+
+    fun getAllFiles(callback: (List<FileRecord>?, IOException?) -> Unit) {
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url("http://10.0.2.2:8080/files/getAll") // Replace with your server URL
+            .get()
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                callback(null, e)
+            }
+
+            @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+            override fun onResponse(call: Call, response: Response) {
+                response.use {
+                    if (it.isSuccessful) {
+                        val responseBody = it.body?.string()
+                        if (responseBody != null) {
+                            try {
+                                val files = Json.decodeFromString<List<FileRecord>>(responseBody)
+                                callback(files, null)
+                            } catch (e: Exception) {
+                                callback(null, IOException("Error parsing JSON: ${e.message}"))
+                            }
+                        } else {
+                            callback(null, IOException("Response body is null"))
+                        }
+                    } else {
+                        callback(null, IOException("Failed to get files"))
+                    }
+                }
+            }
+        })
+    }
+
+    fun renameFile(fileId: Int, newName: String, callback: ResponseCallback) {
+        val client = OkHttpClient()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+        val json = "{\"fileId\":\"$fileId\", \"newName\":\"$newName\"}"
+        val body = json.toRequestBody(mediaType)
+        val request = Request.Builder()
+            .url("http://10.0.2.2:8080/files/rename") // Replace with your server URL
+            .post(body)
+            .build()
+
+        client.newCall(request).enqueue(createOkHttpCallback(callback))
+    }
+
+    fun doesFileExist(fileName: String, callback: ResponseCallback) {
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url("http://10.0.2.2:8080/files/exists/$fileName")
+            .build()
+
+        client.newCall(request).enqueue(createOkHttpCallback(callback))
     }
 }

@@ -12,17 +12,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import java.security.MessageDigest
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
+import java.io.IOException
 
 class SignUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,14 +37,6 @@ class SignUpActivity : ComponentActivity() {
             }
         }
     }
-}
-
-
-fun hashPassword(password: String): String {
-    val bytes = password.toByteArray()
-    val md = MessageDigest.getInstance("SHA-256")
-    val digest = md.digest(bytes)
-    return digest.fold("") { str, it -> str + "%02x".format(it) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,15 +94,21 @@ fun SignupPage() {
                 onClick = {
                     if (username.isEmpty() || password.isEmpty()) {
                         errorMessage = "Please fill in all fields."
-                    } else if (dbHelper.checkUser(username)) {
-                        errorMessage = "Username already exists."
                     } else {
-                        val hashedPassword = hashPassword(password) // Replace with actual hashing function
-                        if (dbHelper.addUser(username, hashedPassword)) {
-                            success = true // Navigate to login on successful registration
-                        } else {
-                            errorMessage = "Failed to create account. Please try again."
-                        }
+                        dbHelper.addUser(username, password, object : ResponseCallback {
+                            override fun onSuccess(responseBody: String) {
+                                if (responseBody == "Username already exists") {
+                                    errorMessage = responseBody
+                                }
+                                else if (responseBody == "User added successfully") {
+                                    success = true
+                                }
+                            }
+                            override fun onFailure(e: IOException) {
+                                errorMessage = "Failed to create account. Please try again."
+                                e.printStackTrace()
+                            }
+                        })
                     }
                 },
                 modifier = Modifier
