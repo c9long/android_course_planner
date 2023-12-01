@@ -90,18 +90,16 @@ fun LoginPage() {
                 .padding(8.dp),
             label = { Text("Password") },
             singleLine = true,
-            visualTransformation = PasswordVisualTransformation() // Hide the password
+            visualTransformation = PasswordVisualTransformation()
         )
 
         Button(
             onClick = {
-                // Handle login action here
                 keyboardController?.hide()
                 if (dbHelper.validateUser(username, password)) {
                     Login = true
                     errorMessage = ""
                 } else {
-                    // Display error message: Invalid credentials
                     errorMessage = "Invalid credentials. Please try again."
                 }
             },
@@ -115,7 +113,7 @@ fun LoginPage() {
         if (errorMessage.isNotEmpty()) {
             Text(
                 text = errorMessage,
-                color = Color.Red, // You can set the color to indicate an error
+                color = Color.Red,
                 modifier = Modifier.padding(8.dp)
             )
         }

@@ -139,10 +139,10 @@ fun HomePage(currentlyLoggedInUser: String) {
             context.startActivity(courseActivityIntent)
             nextPage = GoToNext.Stay
         }
-
+        
         GoToNext.Material -> {
             val context = LocalContext.current
-            val courseMaterialIntent = Intent(context, CourseMaterial::class.java)
+            val courseMaterialIntent = Intent(context, CourseMaterialFolder::class.java)
             context.startActivity(courseMaterialIntent)
             nextPage = GoToNext.Stay
         }

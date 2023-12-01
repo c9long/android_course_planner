@@ -41,14 +41,15 @@ class CourseMaterial : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val userDBHelper = UserDBHelper(this)
+        val folderId = intent.getIntExtra("FOLDER_ID", -1)
+        val folderName = intent.getStringExtra("FOLDER_NAME") ?: "Default Folder"
 
         fun getFileNameFromUri(uri: Uri): String {
-            var name = "New file" // Default name if original name can't be found
+            var name = "New file" // Default name
             val cursor = contentResolver.query(uri, null, null, null, null)
 
             cursor?.use {
                 if (it.moveToFirst()) {
-                    // Get the column index of MediaStore.Images.Media.DISPLAY_NAME
                     val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     if (nameIndex >= 0) {
                         name = it.getString(nameIndex)
@@ -76,20 +77,13 @@ class CourseMaterial : ComponentActivity() {
 
         filePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
-                //val fileName = getFileNameFromUri(it)
-                //userDBHelper.addFile(fileName, it.toString())
-                //val intent = intent
-                //finish()
-                //startActivity(intent)
                 val context = this@CourseMaterial
                 val fileName = getFileNameFromUri(it)
-                if (userDBHelper.isFileExist(fileName)) {
-                    // Show an alert dialog
+                if (userDBHelper.isFileExistInFolder(folderId, fileName)) {
                     Toast.makeText(context, "A file with the same name already exists.", Toast.LENGTH_SHORT).show()
                 } else {
-                    // File with the same name does not exist, proceed with copying
                     val internalFilePath = copyFileToInternalStorage(context, it, fileName)
-                    userDBHelper.addFile(fileName, internalFilePath) // Store the internal path
+                    userDBHelper.addFileToFolder(folderId, fileName, internalFilePath)
                     val intent = intent
                     finish()
                     startActivity(intent)
@@ -103,7 +97,7 @@ class CourseMaterial : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    CourseMaterialPage(userDBHelper, filePickerLauncher)
+                    CourseMaterialPage(userDBHelper, filePickerLauncher, folderId, folderName)
                 }
             }
         }
@@ -116,14 +110,17 @@ class CourseMaterial : ComponentActivity() {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityResultLauncher<String>) {
+fun CourseMaterialPage(userDBHelper: UserDBHelper,
+                       filePickerLauncher: ActivityResultLauncher<String>,
+                       folderId: Int,
+                       folderName: String) {
     var fileList by remember { mutableStateOf(listOf<FileRecord>()) }
     var selectedFileForRename by remember { mutableStateOf<FileRecord?>(null) }
     var fileToDelete by remember { mutableStateOf<FileRecord?>(null) }
     val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
-        fileList = userDBHelper.getAllFiles()
+        fileList = userDBHelper.getFilesInFolder(folderId)
     }
 
     Scaffold(
@@ -141,13 +138,28 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
                 .padding(8.dp)
                 .verticalScroll(scrollState)
         ) {
-            fileList.forEach { file ->
-                FileFolderItem(
-                    fileName = file.name,
-                    fileUri = file.uri,
-                    onDelete = { fileToDelete = file },
-                    onRename = { selectedFileForRename = file }
+            Text(
+                text = folderName,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (fileList.isEmpty()) {
+                Text(
+                    text = "No course material has been added in $folderName.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(top = 20.dp)
                 )
+            } else {
+                fileList.forEach { file ->
+                    FileFolderItem(
+                        fileName = file.name,
+                        fileUri = file.uri,
+                        onDelete = { fileToDelete = file },
+                        onRename = { selectedFileForRename = file }
+                    )
+                }
             }
         }
     }
@@ -157,7 +169,7 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
             initialName = selectedFileForRename!!.name,
             onRename = { newName ->
                 if (userDBHelper.renameFile(selectedFileForRename!!.id, newName)) {
-                    fileList = userDBHelper.getAllFiles() // Refresh the list from the database
+                    fileList = userDBHelper.getFilesInFolder(folderId)
                     selectedFileForRename = null
                 }
             },
@@ -173,7 +185,7 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
             confirmButton = {
                 TextButton(onClick = {
                     if (userDBHelper.deleteFile(fileToDelete!!.id)) {
-                        fileList = userDBHelper.getAllFiles() // Refresh the list after deletion
+                        fileList = userDBHelper.getFilesInFolder(folderId)
                         fileToDelete = null
                     }
                 }) {
@@ -191,7 +203,7 @@ fun CourseMaterialPage(userDBHelper: UserDBHelper, filePickerLauncher: ActivityR
 
 @Composable
 fun FileFolderItem(fileName: String,
-                   fileUri: String, // Add this to pass the URI of the file
+                   fileUri: String,
                    onDelete: () -> Unit,
                    onRename: () -> Unit) {
     val context = LocalContext.current
@@ -210,7 +222,7 @@ fun FileFolderItem(fileName: String,
         ) {
             Text(text = fileName, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.weight(1f))
-            IconButton(onClick = onRename) { // Separate button for rename
+            IconButton(onClick = onRename) {
                 Icon(Icons.Default.Edit, "Rename")
             }
             IconButton(onClick = onDelete) {
@@ -225,7 +237,7 @@ fun FileFolderItem(fileName: String,
 @Composable
 fun RenameFileDialog(initialName: String, onRename: (String) -> Unit, onDismiss: () -> Unit) {
     var newName by remember { mutableStateOf(initialName) }
-    val maxLength = 20 // Maximum length for file name
+    val maxLength = 20
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -266,7 +278,7 @@ fun openPdfFile(context: Context, internalFilePath: String) {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(fileUri, "application/pdf")
             addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // Grant temporary read permission to the content URI
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         ContextCompat.startActivity(context, intent, null)
     } catch (e: Exception) {
@@ -274,5 +286,3 @@ fun openPdfFile(context: Context, internalFilePath: String) {
         Toast.makeText(context, "No application found to open PDF", Toast.LENGTH_SHORT).show()
     }
 }
-
-
