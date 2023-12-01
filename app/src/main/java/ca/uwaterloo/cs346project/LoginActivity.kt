@@ -55,6 +55,7 @@ fun LoginPage() {
 
                 val database = dbHelper.readableDatabase
 
+    CourseList // Initialize CourseList in time for searching
     var errorMessage by remember { mutableStateOf("") }
 
     Column(
