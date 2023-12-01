@@ -62,8 +62,6 @@ class CourseInfoActivity : ComponentActivity() {
                     val courseCode = intent.getStringExtra("COURSE_CODE") ?: ""
                     val courseName = intent.getStringExtra("COURSE_NAME") ?: ""
                     val courseDescription = intent.getStringExtra("COURSE_DESCRIPTION") ?: ""
-                    val instructorName = intent.getStringExtra("INSTRUCTOR_NAME") ?: ""
-                    //val courseOfferings = intent.getStringArrayListExtra("COURSE_OFFERING") ?: emptyList()
                     var courseOfferings: List<CourseSchedule>
                     try {
                         courseOfferings = UWAPIHelper.getCourseScheduleData(courseCode)
@@ -72,7 +70,7 @@ class CourseInfoActivity : ComponentActivity() {
                     }
 
                     CourseInfoScreen(
-                        currentlyLoggedInUser, courseCode, courseName, courseDescription, instructorName,
+                        currentlyLoggedInUser, courseCode, courseName, courseDescription,
                         courseOfferings, onBackButtonClick = { navigateBackToMainActivity() }
                     )
                 }
@@ -98,7 +96,6 @@ fun CourseInfoScreen(
     courseCode: String,
     courseName: String,
     courseDescription: String,
-    instructorName: String,
     courseOfferings: List<CourseSchedule>,
     onBackButtonClick: () -> Unit,
 ) {
@@ -122,12 +119,12 @@ fun CourseInfoScreen(
                 overflow = TextOverflow.Ellipsis
             )
             Text(text = courseDescription, style = MaterialTheme.typography.bodySmall)
-            Text(
-                text = "Instructor: $instructorName",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+//            Text(
+//                text = "Instructor: $instructorName",
+//                style = MaterialTheme.typography.bodyMedium,
+//                color = MaterialTheme.colorScheme.secondary,
+//                modifier = Modifier.padding(bottom = 8.dp)
+//            )
 
             Text(
                 text = "Course Offerings:",

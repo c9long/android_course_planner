@@ -79,12 +79,14 @@ fun BasicEvent(
         Text(
             text = "${event.start.format(EventTimeFormatter)} - ${event.end.format(EventTimeFormatter)}",
             style = MaterialTheme.typography.labelLarge,
+            color = Color.Black
         )
 
         Text(
             text = event.name,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
+            color = Color.Black
         )
 
         if (event.description != null) {
@@ -93,6 +95,7 @@ fun BasicEvent(
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                color = Color.Black
             )
         }
     }
