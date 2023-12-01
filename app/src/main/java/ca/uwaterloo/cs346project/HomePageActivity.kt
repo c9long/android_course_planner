@@ -130,7 +130,7 @@ fun HomePage(currentlyLoggedInUser: String) {
 
     if (showColumn3) {
         val context = LocalContext.current
-        val courseMaterialIntent = Intent(context, CourseMaterial::class.java)
+        val courseMaterialIntent = Intent(context, CourseMaterialFolder::class.java)
         context.startActivity(courseMaterialIntent)
         showColumn3 = false
     }

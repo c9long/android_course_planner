@@ -106,9 +106,9 @@ fun SignupPage() {
                     } else if (dbHelper.checkUser(username)) {
                         errorMessage = "Username already exists."
                     } else {
-                        val hashedPassword = hashPassword(password) // Replace with actual hashing function
+                        val hashedPassword = hashPassword(password)
                         if (dbHelper.addUser(username, hashedPassword)) {
-                            success = true // Navigate to login on successful registration
+                            success = true
                         } else {
                             errorMessage = "Failed to create account. Please try again."
                         }
@@ -116,7 +116,7 @@ fun SignupPage() {
                 },
                 modifier = Modifier
                     .weight(1f)
-                    .padding(8.dp) // Adjust the padding as needed
+                    .padding(8.dp)
             ) {
                 Text(text = "Sign Up", fontSize = 18.sp)
             }
@@ -127,7 +127,7 @@ fun SignupPage() {
                 },
                 modifier = Modifier
                     .weight(1f)
-                    .padding(8.dp) // Adjust the padding as needed
+                    .padding(8.dp)
             ) {
                 Text(text = "Back", fontSize = 18.sp)
             }
@@ -146,7 +146,7 @@ fun SignupPage() {
     }
 
     if (success) {
-        LocalContext.current.startActivity(Intent(LocalContext.current, LoginActivity::class.java))
+        LocalContext.current.startActivity(Intent(LocalContext.current, HomePageActivity::class.java))
         success = false
     }
 }
