@@ -37,7 +37,7 @@ data class EnrollmentRequest(val currentUser: String, val cs: CourseSchedule, va
 class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        private const val URL = "127.0.0.1"
+        private const val URL = "10.0.2.2"
         private const val DATABASE_VERSION = 3
         private const val DATABASE_NAME = "UserDatabase.db"
 
