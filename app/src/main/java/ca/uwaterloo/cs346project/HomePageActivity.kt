@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -58,7 +57,7 @@ fun HomePage(currentlyLoggedInUser: String) {
                     text = "Course Planner",
                     fontSize = 40.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2196F3),
+                    color = MaterialTheme.colorScheme.primary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .padding(16.dp)
