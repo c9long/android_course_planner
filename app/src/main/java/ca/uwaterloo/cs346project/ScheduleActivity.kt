@@ -94,58 +94,57 @@ fun BasicEvent(
     }
 }
 
+private var Events = listOf<Event>(
+    Event(
+        name = "placeholder",
+        color = Color(0xFFAFBBF2),
+        start = LocalDateTime.parse("2023-05-14T00:00:00"),
+        end = LocalDateTime.parse("2023-05-14T00:00:00"),
+        description = "keep the calendar open to 7 days",
+    ),
+    Event(
+        name = "placeholder2",
+        color = Color(0xFFAFBBF2),
+        start = LocalDateTime.parse("2023-05-20T00:00:00"),
+        end = LocalDateTime.parse("2023-05-20T00:00:00"),
+        description = "keep the calendar open to 7 days",
+    ),
+//    Event(
+//        name = "CS 121",
+//        color = Color(0xFF1B998B),
+//        start = LocalDateTime.parse("2023-05-14T16:50:00"),
+//        end = LocalDateTime.parse("2023-05-14T18:00:00"),
+//        description = "An arbitrary CS course placeholder description.",
+//    ),
+//    Event(
+//        name = "CS 122",
+//        color = Color(0xFFF4BFDB),
+//        start = LocalDateTime.parse("2023-05-15T09:30:00"),
+//        end = LocalDateTime.parse("2023-05-15T11:00:00"),
+//        description = "An arbitrary CS course placeholder description.",
+//    ),
+//    Event(
+//        name = "CS 135",
+//        color = Color(0xFF6DD3CE),
+//        start = LocalDateTime.parse("2023-05-16T11:00:00"),
+//        end = LocalDateTime.parse("2023-05-16T12:15:00"),
+//        description = "An arbitrary CS course placeholder description.",
+//    ),
+//    Event(
+//        name = "CS 136",
+//        color = Color(0xFF1B998B),
+//        start = LocalDateTime.parse("2023-05-20T12:00:00"),
+//        end = LocalDateTime.parse("2023-05-20T13:50:00"),
+//        description = "An arbitrary CS course placeholder description.",
+//    ),
+)
 @Composable
 fun CreateEventList (
     currentUser: String,
-) {
+) : List<Event> {
     val dbHelper = UserDBHelper(LocalContext.current)
-    sampleEvents = dbHelper.getAllEnrollments(currentUser)
+    return dbHelper.getAllEnrollments(currentUser)
 }
-
-private var sampleEvents = mutableListOf(
-    Event(
-        name = "CS 111",
-        color = Color(0xFFAFBBF2),
-        start = LocalDateTime.parse("2023-05-14T13:00:00"),
-        end = LocalDateTime.parse("2023-05-14T15:00:00"),
-        description = "An arbitrary CS course placeholder description.",
-    ),
-    Event(
-        name = "CS 112",
-        color = Color(0xFFAFBBF2),
-        start = LocalDateTime.parse("2023-05-14T15:15:00"),
-        end = LocalDateTime.parse("2023-05-14T16:00:00"),
-        description = "An arbitrary CS course placeholder description.",
-    ),
-    Event(
-        name = "CS 121",
-        color = Color(0xFF1B998B),
-        start = LocalDateTime.parse("2023-05-14T16:50:00"),
-        end = LocalDateTime.parse("2023-05-14T18:00:00"),
-        description = "An arbitrary CS course placeholder description.",
-    ),
-    Event(
-        name = "CS 122",
-        color = Color(0xFFF4BFDB),
-        start = LocalDateTime.parse("2023-05-15T09:30:00"),
-        end = LocalDateTime.parse("2023-05-15T11:00:00"),
-        description = "An arbitrary CS course placeholder description.",
-    ),
-    Event(
-        name = "CS 135",
-        color = Color(0xFF6DD3CE),
-        start = LocalDateTime.parse("2023-05-16T11:00:00"),
-        end = LocalDateTime.parse("2023-05-16T12:15:00"),
-        description = "An arbitrary CS course placeholder description.",
-    ),
-    Event(
-        name = "CS 136",
-        color = Color(0xFF1B998B),
-        start = LocalDateTime.parse("2023-05-20T12:00:00"),
-        end = LocalDateTime.parse("2023-05-20T13:50:00"),
-        description = "An arbitrary CS course placeholder description.",
-    ),
-)
 
 class ScheduleActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -157,6 +156,8 @@ class ScheduleActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Cs346projectTheme {
+                        val currUser = intent.getStringExtra("CURRENT_USER") ?: ""
+                        val sampleEvents = CreateEventList(currUser)
                         Schedule(sampleEvents)
                     }
                 }
@@ -171,11 +172,12 @@ fun BasicSchedule(
     modifier: Modifier = Modifier,
     eventContent: @Composable (event: Event) -> Unit = { BasicEvent(event = it) },
     minDate: LocalDate = events.minByOrNull(Event::start)!!.start.toLocalDate(),
-    maxDate: LocalDate = events.maxByOrNull(Event::end)!!.end.toLocalDate(),
+    maxDate: LocalDate = minDate.plus(6, ChronoUnit.DAYS),
     dayWidth: Dp,
     hourHeight: Dp,
 ) {
     val numDays = ChronoUnit.DAYS.between(minDate, maxDate).toInt() + 1
+    println(numDays)
     Layout(
         content = {
             events.sortedBy(Event::start).forEach { event ->
@@ -228,13 +230,6 @@ fun BasicDayHeader(
             .fillMaxWidth()
             .padding(4.dp)
     )
-}
-
-@Composable
-fun BasicDayHeaderPreview() {
-    Cs346projectTheme {
-        BasicDayHeader(day = LocalDate.now())
-    }
 }
 
 @Composable
@@ -329,13 +324,6 @@ fun BasicSidebarLabel(
 }
 
 @Composable
-fun BasicSidebarLabelPreview() {
-    Cs346projectTheme {
-        BasicSidebarLabel(time = LocalTime.NOON, Modifier.sizeIn(maxHeight = 64.dp))
-    }
-}
-
-@Composable
 fun ScheduleSidebar(
     hourHeight: Dp,
     modifier: Modifier = Modifier,
@@ -348,12 +336,5 @@ fun ScheduleSidebar(
                 label(startTime.plusHours(i.toLong()))
             }
         }
-    }
-}
-
-@Composable
-fun ScheduleSidebarPreview() {
-    Cs346projectTheme {
-        ScheduleSidebar(hourHeight = 64.dp)
     }
 }

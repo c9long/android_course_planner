@@ -307,18 +307,29 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
 
     fun getAllEnrollments(currentUser: String): MutableList<Event> {
         val db = this.readableDatabase
-        val query = "SELECT * FROM $TABLE_ENROLLMENTS WHERE $COLUMN_ENROLLMENT_USER='$currentUser'"
+        val query = "$COLUMN_ENROLLMENT_USER='$currentUser'"
         val cursor = db.query(
             TABLE_ENROLLMENTS,
-            arrayOf(COLUMN_ENROLLMENT_CODE, COLUMN_ENROLLMENT_START, COLUMN_ENROLLMENT_END, COLUMN_COURSE_DESC),
+            arrayOf(COLUMN_ENROLLMENT_CODE, COLUMN_ENROLLMENT_START, COLUMN_ENROLLMENT_END, COLUMN_ENROLLMENT_DESC),
             query,
             arrayOf(),
             null, null, null, null
         )
         val ret: MutableList<Event> = mutableListOf()
         while (cursor.moveToNext()) {
-            ret.add(Event(cursor.getString(0), LocalDateTime.parse(cursor.getString(1)), LocalDateTime.parse(cursor.getString(2)),
-                cursor.getString(3)))
+            val codeIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_CODE)
+            val startIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_START)
+            val endIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_END)
+            val descIdx = cursor.getColumnIndex(COLUMN_ENROLLMENT_DESC)
+
+            if (codeIdx != -1 && startIdx != -1 && endIdx != -1 && descIdx != -1) {
+                val code = cursor.getString(codeIdx)
+                val start = LocalDateTime.parse(cursor.getString(startIdx))
+                val end = LocalDateTime.parse(cursor.getString(endIdx))
+                val desc = cursor.getString(descIdx)
+
+                ret.add(Event(code, start, end, desc))
+            }
         }
 
         cursor.close()
@@ -326,11 +337,21 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         return ret
     }
 
-    fun addEnrollment(currentUser: String) {
+    fun addEnrollment(currentUser: String, cs: CourseSchedule, course: Course) : Boolean {
         val db = this.writableDatabase
 
+        val value = ContentValues().apply {
+            put(COLUMN_ENROLLMENT_USER, currentUser)
+            put(COLUMN_ENROLLMENT_CODE, course.code)
+            put(COLUMN_ENROLLMENT_DESC, course.description)
+            put(COLUMN_ENROLLMENT_START, cs.meetStart)
+            put(COLUMN_ENROLLMENT_END, cs.meetEnd)
+        }
+
+        val result = db.insert(TABLE_ENROLLMENTS, null, value)
+        db.close()
+        return result != -1L
     }
-}
 
     fun addFile(fileName: String, fileUri: String): Boolean {
         val db = this.writableDatabase
