@@ -1,0 +1,21 @@
+[33mfe6426b[m[33m ([m[1;36mHEAD -> [m[1;32mcourseMaterial[m[33m, [m[1;31morigin/courseMaterial[m[33m)[m HEAD@{0}: checkout: moving from main to courseMaterial
+[33m4eb44d9[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{1}: pull: Fast-forward
+[33me58d017[m[33m ([m[1;31morigin/23-set-up-web-services-v2[m[33m, [m[1;31morigin/20-add-database-for-enrolled-courses-per-user[m[33m)[m HEAD@{2}: checkout: moving from courseMaterial to main
+[33mfe6426b[m[33m ([m[1;36mHEAD -> [m[1;32mcourseMaterial[m[33m, [m[1;31morigin/courseMaterial[m[33m)[m HEAD@{3}: commit: small modifications
+[33m241cf83[m HEAD@{4}: commit: courseMaterial improvements
+[33me58d017[m[33m ([m[1;31morigin/23-set-up-web-services-v2[m[33m, [m[1;31morigin/20-add-database-for-enrolled-courses-per-user[m[33m)[m HEAD@{5}: checkout: moving from main to courseMaterial
+[33me58d017[m[33m ([m[1;31morigin/23-set-up-web-services-v2[m[33m, [m[1;31morigin/20-add-database-for-enrolled-courses-per-user[m[33m)[m HEAD@{6}: pull: Fast-forward
+[33m3b87216[m HEAD@{7}: checkout: moving from courseMaterial to main
+[33me3c2b36[m HEAD@{8}: commit: open pdf
+[33m1798e9d[m HEAD@{9}: commit: minor change
+[33m174e033[m HEAD@{10}: commit: back to initial state
+[33m3d0e45c[m HEAD@{11}: commit: fix minor bug
+[33m1f33f49[m HEAD@{12}: commit: fix bug of adding files
+[33m7bf0ea5[m HEAD@{13}: commit: add courseMaterial
+[33m3b87216[m HEAD@{14}: checkout: moving from main to courseMaterial
+[33m3b87216[m HEAD@{15}: checkout: moving from courseMaterial to main
+[33m3b87216[m HEAD@{16}: checkout: moving from main to courseMaterial
+[33m3b87216[m HEAD@{17}: pull: Fast-forward
+[33mad9d104[m HEAD@{18}: pull: Fast-forward
+[33m1ee40d7[m HEAD@{19}: commit: add class UserDBHelper, implement user credentials
+[33m18c6da8[m HEAD@{20}: clone: from https://git.uwaterloo.ca/dgrinton/cs346-project.git

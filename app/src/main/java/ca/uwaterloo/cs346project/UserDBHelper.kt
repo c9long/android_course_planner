@@ -305,13 +305,25 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
 
     fun addFileToFolder(folderId: Int, fileName: String, fileUri: String): Boolean {
         val db = this.writableDatabase
+        var count = 1
+        val cursor1 = db.query(
+            TABLE_FILES, arrayOf(COLUMN_FILE_ID, COLUMN_REF_COUNT),
+            "$COLUMN_FILE_URI = ?", arrayOf(fileUri),
+            null, null, null
+        )
+
+        while (cursor1.moveToNext()) {
+            count = cursor1.getInt(cursor1.getColumnIndexOrThrow(COLUMN_REF_COUNT))
+        }
+        cursor1.close()
+
 
         // Step 1: Insert the new file record
         val values = ContentValues().apply {
             put(COLUMN_FILE_NAME, fileName)
             put(COLUMN_FILE_URI, fileUri)
             put(COLUMN_FOLDER_ID, folderId)
-            put(COLUMN_REF_COUNT, 1)  // Initial ref_count is set to 1
+            put(COLUMN_REF_COUNT, count)  // Initial ref_count is set to 1
         }
 
         val result = db.insert(TABLE_FILES, null, values)
@@ -328,7 +340,6 @@ class UserDBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
             while (cursor.moveToNext()) {
                 val fileId = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_FILE_ID))
                 val refCount = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_REF_COUNT)) + 1
-
                 val updateValues = ContentValues().apply {
                     put(COLUMN_REF_COUNT, refCount)
                 }
