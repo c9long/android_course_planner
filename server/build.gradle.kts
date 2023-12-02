@@ -10,7 +10,7 @@ kotlin {
 plugins {
     kotlin("jvm")
     id("io.ktor.plugin") version "2.3.6"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.20"
+    kotlin("plugin.serialization") version "1.9.21"
 }
 
 group = "com.example"
@@ -32,6 +32,7 @@ dependencies {
     implementation("org.jetbrains.exposed", "exposed-jdbc", "0.40.1")
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     implementation("io.ktor:ktor-server-websockets-jvm")
     implementation("io.ktor:ktor-server-netty-jvm")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")

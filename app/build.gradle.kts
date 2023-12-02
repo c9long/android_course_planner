@@ -66,7 +66,7 @@ dependencies {
     implementation("androidx.navigation:navigation-runtime-ktx:2.7.4")
     implementation("org.xerial:sqlite-jdbc:3.39.3.0")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
     testImplementation("androidx.test:core:1.5.0")
     testImplementation("androidx.test.ext:junit-ktx:1.1.5")
