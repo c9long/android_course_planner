@@ -61,7 +61,7 @@ fun LoginPage() {
     var Login by remember { mutableStateOf(false) }
     var SignUp by remember { mutableStateOf(false) }
 
-    val dbHelper = UserDBHelper(LocalContext.current)
+    val dbHelper = UserDBHelper()
     CourseList // Initialize CourseList in time for searching
     var errorMessage by remember { mutableStateOf("") }
 

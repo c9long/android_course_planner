@@ -47,7 +47,7 @@ fun SignupPage() {
     var success by remember { mutableStateOf(false) }
 
     var errorMessage by remember { mutableStateOf("") }
-    val dbHelper = UserDBHelper(LocalContext.current)
+    val dbHelper = UserDBHelper()
 
     Column(
         modifier = Modifier.fillMaxSize(),

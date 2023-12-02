@@ -139,13 +139,21 @@ fun Application.configureRouting() {
             post("/addFileToFolder") {
                 val request = call.receive<FileToFolderRequest>()
                 val result = fileFolderDB.addFileToFolder(request.folderId, request.fileName, request.fileUri)
-                call.respond(HttpStatusCode.OK, result)
+                if (result) {
+                    call.respond(HttpStatusCode.OK, "file added successfully")
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, "Failed to add file")
+                }
             }
 
             delete("/deleteFile/{fileId}") {
                 val fileId = call.parameters["fileId"]?.toInt() ?: return@delete call.respond(HttpStatusCode.BadRequest)
                 val result = fileFolderDB.deleteFile(fileId)
-                call.respond(HttpStatusCode.OK, result)
+                if (result) {
+                    call.respond(HttpStatusCode.OK, "file deleted successfully")
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, "Failed to delete file")
+                }
             }
 
             get("/getFilesInFolder/{folderId}") {
@@ -157,20 +165,34 @@ fun Application.configureRouting() {
             post("/renameFile") {
                 val request = call.receive<RenameFileRequest>()
                 val result = fileFolderDB.renameFile(request.fileId, request.newName)
-                call.respond(HttpStatusCode.OK, result)
+                if (result) {
+                    call.respond(HttpStatusCode.OK, "file renamed successfully")
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, "Failed to rename file")
+                }
             }
 
             get("/isFileExistInFolder/{folderId}/{fileName}") {
                 val folderId = call.parameters["folderId"]?.toInt() ?: return@get call.respond(HttpStatusCode.BadRequest)
                 val fileName = call.parameters["fileName"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                println(folderId)
+                println(fileName)
                 val exists = fileFolderDB.isFileExistInFolder(folderId, fileName)
-                call.respond(HttpStatusCode.OK, exists)
+                if (exists) {
+                    call.respond(HttpStatusCode.OK, "file exists")
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, "file does not exist")
+                }
             }
 
             post("/addFolder") {
                 val folderName = call.receive<FolderRequest>().folderName
                 val result = fileFolderDB.addFolder(folderName)
-                call.respond(HttpStatusCode.OK, result)
+                if (result) {
+                    call.respond(HttpStatusCode.OK, "folder added successfully")
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, "Failed to add folder")
+                }
             }
 
             get("/getAllFolders") {
@@ -181,19 +203,31 @@ fun Application.configureRouting() {
             delete("/deleteFolder/{folderId}") {
                 val folderId = call.parameters["folderId"]?.toInt() ?: return@delete call.respond(HttpStatusCode.BadRequest)
                 val result = fileFolderDB.deleteFolder(folderId)
-                call.respond(HttpStatusCode.OK, result)
+                if (result) {
+                    call.respond(HttpStatusCode.OK, "folder deleted successfully")
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, "Failed to delete folder")
+                }
             }
 
             post("/renameFolder") {
                 val request = call.receive<RenameFolderRequest>()
                 val result = fileFolderDB.renameFolder(request.folderId, request.newName)
-                call.respond(HttpStatusCode.OK, result)
+                if (result) {
+                    call.respond(HttpStatusCode.OK, "folder renamed successfully")
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, "Failed to rename folder")
+                }
             }
 
             get("/folderNameExists/{folderName}") {
                 val folderName = call.parameters["folderName"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                 val exists = fileFolderDB.folderNameExists(folderName)
-                call.respond(HttpStatusCode.OK, exists)
+                if (exists) {
+                    call.respond(HttpStatusCode.OK, "folder exists")
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, "folder does not exist")
+                }
             }
 
         }

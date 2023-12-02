@@ -30,7 +30,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -165,11 +164,11 @@ private var Events = listOf<Event>(
 //    ),
 )
 @Composable
-fun CreateEventList (
+fun createEventList (
     currentUser: String,
 ) : List<Event>? {
     var allEnrollments by remember { mutableStateOf<List<Event>?>(null) }
-    val dbHelper = UserDBHelper(LocalContext.current)
+    val dbHelper = UserDBHelper()
     dbHelper.getAllEnrollments(currentUser) { enrollments, error ->
         if (error != null) {
             println("Error: ${error.message}")
@@ -177,7 +176,7 @@ fun CreateEventList (
             allEnrollments = enrollments
         }
     }
-    return allEnrollments;
+    return allEnrollments
 }
 
 class ScheduleActivity : ComponentActivity() {
@@ -192,7 +191,7 @@ class ScheduleActivity : ComponentActivity() {
                 ) {
                     Cs346projectTheme {
                         val currUser = intent.getStringExtra("CURRENT_USER") ?: ""
-                        val sampleEvents = CreateEventList(currUser)
+                        val sampleEvents = createEventList(currUser)
                         if (sampleEvents != null) {
                             Schedule(sampleEvents)
                         }

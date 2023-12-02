@@ -27,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -106,7 +105,7 @@ fun CourseInfoScreen(
         typography = Typography(),
         shapes = Shapes()
     ) {
-        val dbHelper = UserDBHelper(LocalContext.current)
+        val dbHelper = UserDBHelper()
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
@@ -241,7 +240,7 @@ fun CourseInfoScreen(
 @Composable
 fun AddCourseButton(currUser: String, cs: CourseSchedule, course: Course, onClick: () -> Unit) {
     // Material Design button that triggers the custom toast when clicked
-    val dbHelper = UserDBHelper(LocalContext.current)
+    val dbHelper = UserDBHelper()
     Button(
         onClick = {
             onClick()

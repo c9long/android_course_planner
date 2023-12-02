@@ -20,11 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
+import java.io.IOException
 
 class CourseMaterialFolder : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val userDBHelper = UserDBHelper(this)
+        val userDBHelper = UserDBHelper()
         setContent {
             Cs346projectTheme {
                 Surface(
@@ -50,7 +51,14 @@ fun CourseMaterialFolderPage(userDBHelper: UserDBHelper) {
     var showAddFolderDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        folderList = userDBHelper.getAllFolders()
+        userDBHelper.getAllFolders() { allFolders, error ->
+            if (error != null) {
+                println("Error fetching folders: ${error.message}")
+            } else if (allFolders != null) {
+                println("initial fetch of all folders")
+                folderList = allFolders
+            }
+        }
     }
 
     Scaffold(
@@ -97,15 +105,28 @@ fun CourseMaterialFolderPage(userDBHelper: UserDBHelper) {
     if (showAddFolderDialog) {
         AddFolderDialog(
             onAddFolder = { folderName ->
-                userDBHelper.addFolder(folderName)
-                folderList = userDBHelper.getAllFolders()
+                userDBHelper.addFolder(folderName, object: ResponseCallback {
+                    override fun onSuccess(responseBody: String) {
+                        println("folder added")
+                        userDBHelper.getAllFolders() { allFolders, error ->
+                            if (error != null) {
+                                println("Error fetching folders: ${error.message}")
+                            } else if (allFolders != null) {
+                                println("updated fetch of all files, after adding folder")
+                                folderList = allFolders
+                            }
+                        }
+                    }
+
+                    override fun onFailure(e: IOException) {
+                        println("folder not added")
+                        e.printStackTrace()
+                    }
+                })
                 showAddFolderDialog = false
             },
             onDismiss = {
                 showAddFolderDialog = false
-            },
-            folderNameExists = { folderName ->
-                userDBHelper.folderNameExists(folderName)
             }
         )
     }
@@ -123,10 +144,25 @@ fun CourseMaterialFolderPage(userDBHelper: UserDBHelper) {
         RenameFolderDialog(
             initialName = selectedFolderForRename!!.name,
             onRename = { newName ->
-                if (userDBHelper.renameFolder(selectedFolderForRename!!.id, newName)) {
-                    folderList = userDBHelper.getAllFolders()
-                    selectedFolderForRename = null
-                }
+                userDBHelper.renameFolder(selectedFolderForRename!!.id, newName, object: ResponseCallback {
+                    override fun onSuccess(responseBody: String) {
+                        println("folder renamed")
+                        selectedFolderForRename = null
+                        userDBHelper.getAllFolders() { allFolders, error ->
+                            if (error != null) {
+                                println("Error fetching folders: ${error.message}")
+                            } else if (allFolders != null) {
+                                println("updated fetch of all folders, after folder renaming")
+                                folderList = allFolders
+                            }
+                        }
+                    }
+
+                    override fun onFailure(e: IOException) {
+                        println("folder not renamed")
+                        e.printStackTrace()
+                    }
+                })
             },
             onDismiss = { selectedFolderForRename = null }
         )
@@ -139,14 +175,46 @@ fun CourseMaterialFolderPage(userDBHelper: UserDBHelper) {
             text = { Text("Are you sure you want to delete \"${folderToDelete?.name}\"?") },
             confirmButton = {
                 TextButton(onClick = {
-                    if (userDBHelper.deleteFolder(folderToDelete!!.id)) {
-                        folderList = userDBHelper.getAllFolders()
-                        var fileList = userDBHelper.getFilesInFolder(folderToDelete!!.id)
-                        for (file in fileList) {
-                            userDBHelper.deleteFile(file.id)
+                    userDBHelper.deleteFolder(folderToDelete!!.id, object: ResponseCallback {
+                        override fun onSuccess(responseBody: String) {
+                            println("folder deleted")
+
+                            userDBHelper.getFilesInFolder(folderToDelete!!.id) { allFiles, error ->
+                                if (error != null) {
+                                    println("Error fetching folders: ${error.message}")
+                                } else if (allFiles != null) {
+                                    println("updated fetch of all folders, after folder delete")
+                                    for (file in allFiles) {
+                                        userDBHelper.deleteFile(file.id, object: ResponseCallback {
+                                            override fun onSuccess(responseBody: String) {
+                                                println("file deleted")
+                                            }
+
+                                            override fun onFailure(e: IOException) {
+                                                println("file not deleted")
+                                                e.printStackTrace()
+                                            }
+                                        })
+                                    }
+                                }
+                            }
+
+                            userDBHelper.getAllFolders() { allFolders, error ->
+                                if (error != null) {
+                                    println("Error fetching folders: ${error.message}")
+                                } else if (allFolders != null) {
+                                    println("updated fetch of all folders, after folder delete")
+                                    folderList = allFolders
+                                }
+                            }
+                            folderToDelete = null
                         }
-                        folderToDelete = null
-                    }
+
+                        override fun onFailure(e: IOException) {
+                            println("folder not deleted")
+                            e.printStackTrace()
+                        }
+                    })
                 }) {
                     Text("Delete")
                 }
@@ -192,7 +260,6 @@ fun FolderItem(folderName: String, onFolderClick: () -> Unit, onDelete: () -> Un
 fun AddFolderDialog(
     onAddFolder: (String) -> Unit,
     onDismiss: () -> Unit,
-    folderNameExists: (String) -> Boolean
 ) {
     var newFolderName by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String>("") }
@@ -213,12 +280,20 @@ fun AddFolderDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (folderNameExists(newFolderName)) {
-                        errorMessage = "name already exists."
-                    } else {
-                        onAddFolder(newFolderName)
-                        newFolderName = ""
-                    }
+                    val userDBHelper = UserDBHelper()
+                    userDBHelper.folderNameExists(newFolderName, object: ResponseCallback {
+                        override fun onSuccess(responseBody: String) {
+                            errorMessage = "name already exists."
+                            println("$newFolderName exists")
+                        }
+
+                        override fun onFailure(e: IOException) {
+                            onAddFolder(newFolderName)
+                            println("$newFolderName does not exist")
+                            newFolderName = ""
+                            e.printStackTrace()
+                        }
+                    })
                 }
             ) {
                 Text("Add")
