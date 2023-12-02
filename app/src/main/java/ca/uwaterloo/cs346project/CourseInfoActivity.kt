@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -139,36 +141,45 @@ fun CourseInfoScreen(
                 }
             }
 
-            courseOfferings.forEachIndexed { index, offering ->
-                val text: String
-                if (offering.section == noOfferings) {
-                    text = noOfferings
-                } else {
-                    text = "Enrollment: ${offering.enrollment} / ${offering.maxEnrollment}, \t ${offering.meetDays}: ${offering.meetStart.substring(11, 16)} - ${offering.meetEnd.substring(11, 16)}"
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    val course = Course(courseCode, courseName, courseDescription)
-                    AddCourseButton(currentlyLoggedInUser, offering, course) {
-                        // Set the state to show the toast
-                        showToast = true
-                    }
-                    Text(text = offering.section, style = MaterialTheme.typography.bodySmall)
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
+            val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
-                // Add a divider between rows except for the last row
-                if (index < courseOfferings.size - 1) {
-                    Divider(modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp))
+            LazyColumn(
+                modifier = Modifier
+                    .heightIn(max = screenHeight * 0.4f) // Half of the screen height
+                    .fillMaxWidth()
+            ) {
+                itemsIndexed(courseOfferings) { index, offering ->
+                    val text: String
+                    if (offering.section == noOfferings) {
+                        text = noOfferings
+                    } else {
+                        text = "Enrollment: ${offering.enrollment} / ${offering.maxEnrollment}, \t ${offering.meetDays}: ${offering.meetStart.substring(11, 16)} - ${offering.meetEnd.substring(11, 16)}"
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        val course = Course(courseCode, courseName, courseDescription)
+                        AddCourseButton(currentlyLoggedInUser, offering, course) {
+                            // Set the state to show the toast
+                            showToast = true
+                        }
+                        Text(text = offering.section, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    // Add a divider between rows except for the last row
+                    if (index < courseOfferings.size - 1) {
+                        Divider(modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp))
+                    }
                 }
             }
 
