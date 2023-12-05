@@ -67,6 +67,7 @@ class UserDBHelper{
         client.newCall(request).enqueue(createOkHttpCallback(callback))
     }
 
+
     fun validateUser(username: String, password: String, callback: ResponseCallback) {
         val client = OkHttpClient()
         val mediaType = "application/json; charset=utf-8".toMediaType()
@@ -75,6 +76,19 @@ class UserDBHelper{
         val request = Request.Builder()
             .url("http://$URL:8080/users/validate")
             .post(body)
+            .build()
+
+        client.newCall(request).enqueue(createOkHttpCallback(callback))
+    }
+
+    fun changePassword(username: String, oldPassword: String, newPassword: String, callback: ResponseCallback) {
+        val client = OkHttpClient()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+        val json = "{\"username\":\"$username\", \"oldPassword\":\"$oldPassword\", \"newPassword\":\"$newPassword\"}"
+        val body = json.toRequestBody(mediaType)
+        val request = Request.Builder()
+            .url("http://$URL:8080/users/changePassword")
+            .put(body)
             .build()
 
         client.newCall(request).enqueue(createOkHttpCallback(callback))

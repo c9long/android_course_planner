@@ -13,11 +13,7 @@ import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.route
-import io.ktor.server.routing.routing
+import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 
 fun Application.configureRouting() {
@@ -29,6 +25,9 @@ fun Application.configureRouting() {
 
     @Serializable
     data class UserCredentials(val username: String, val password: String)
+
+    @Serializable
+    data class UserCP(val username: String, val oldPassword: String, val newPassword: String)
 
     @Serializable
     data class FileToFolderRequest(val folderId: Int, val fileName: String, val fileUri: String)
@@ -72,6 +71,21 @@ fun Application.configureRouting() {
                 }
                 else {
                     call.respondText("User not validated", status = HttpStatusCode.InternalServerError)
+                }
+            }
+
+            put("/changePassword") {
+                val userCredentials = call.receive<UserCP>()
+                when (userDB.changePassword(userCredentials.username, userCredentials.oldPassword, userCredentials.newPassword)) {
+                    1 -> {
+                        call.respondText("Password changed successfully")
+                    }
+                    2 -> {
+                        call.respondText("Username not exists or false old password")
+                    }
+                    else -> {
+                        call.respondText("Failed", status = HttpStatusCode.InternalServerError)
+                    }
                 }
             }
         }

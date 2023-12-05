@@ -86,6 +86,14 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity android:name=".ChangePassword"
+                  android:exported="true"
+                  android:theme="@style/Theme.Cs346project">
+            <intent-filter>
+                <action android:name="com.example.action.CHANGEPASSWORD" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name=".CourseMaterialFolder"
                   android:exported="true"
                   android:theme="@style/Theme.Cs346project">

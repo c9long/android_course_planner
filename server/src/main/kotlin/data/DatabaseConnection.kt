@@ -9,6 +9,7 @@ import java.sql.PreparedStatement
 import java.sql.SQLException
 import java.time.LocalDateTime
 
+
 private const val DATABASE_NAME = "UserDatabase.db"
 
 private const val TABLE_USERS = "users"
@@ -210,6 +211,25 @@ class UserDB {
             return false
         }
     }
+
+    fun changePassword(username: String, oldPassword: String, newPassword: String): Int {
+        if (!validateUser(username, oldPassword)) {
+            return 2
+        }
+
+        val hashedNewPassword = hashPassword(newPassword)
+
+        val sql = "UPDATE $TABLE_USERS SET $COLUMN_PASSWORD = ? WHERE $COLUMN_USERNAME = ?"
+
+        DatabaseConnection.getConnection().use { connection ->
+            val statement = connection.prepareStatement(sql).apply {
+                setString(1, hashedNewPassword)
+                setString(2, username)
+            }
+            return statement.executeUpdate()
+        }
+    }
+
 }
 
 class ReviewDB {

@@ -60,6 +60,7 @@ fun LoginPage() {
     val keyboardController = LocalSoftwareKeyboardController.current
     var Login by remember { mutableStateOf(false) }
     var SignUp by remember { mutableStateOf(false) }
+    var CP by remember { mutableStateOf(false) }
 
     val dbHelper = UserDBHelper()
     CourseList // Initialize CourseList in time for searching
@@ -141,10 +142,10 @@ fun LoginPage() {
         )
 
         Text(
-            text = "Forgot Password?",
+            text = "Want to Change Password?",
             color = Color.Gray,
             modifier = Modifier.clickable {
-                // Handle "Forgot Password" action here
+                CP = true
             }
         )
     }
@@ -161,6 +162,13 @@ fun LoginPage() {
         val context = LocalContext.current
         val SignUpIntent = Intent(context, SignUpActivity::class.java)
         context.startActivity(SignUpIntent)
+        SignUp = false
+    }
+
+    if (CP) {
+        val context = LocalContext.current
+        val CPIntent = Intent(context, ChangePassword::class.java)
+        context.startActivity(CPIntent)
         SignUp = false
     }
 
