@@ -18,10 +18,11 @@ Navigate to the latest available release below, or using the link to view all so
 ## Requirements
 This application is aimed at providing an inclusive, all-in-one student course planning platform for all students attending the University of Waterloo. Offering a default [home page](https://git.uwaterloo.ca/dgrinton/cs346-project/-/issues/11?work_item_iid=12), the ability to [create and log in](https://git.uwaterloo.ca/dgrinton/cs346-project/-/issues/11?work_item_iid=17) to an account, a personalized [schedule](https://git.uwaterloo.ca/dgrinton/cs346-project/-/issues/11?work_item_iid=14), the ability to [search](https://git.uwaterloo.ca/dgrinton/cs346-project/-/issues/11?work_item_iid=12) for all existing and previously offered courses at UW, and [descriptions](https://git.uwaterloo.ca/dgrinton/cs346-project/-/issues/18) for every course are among the most prominent features of our Course Planner. For a full list of features and details, click [here]()
 ## Architecture and Design
-
 ### Proposal
 View our project's proposal [here.](https://git.uwaterloo.ca/dgrinton/cs346-project/-/wikis/Project-Proposal)
-## Meeting Minutes
+### Revised High-Level Architecture and Design
+View the latest architecture and design diagrams [here.]()
+### Meeting Minutes
 View the logged meeting minutes [here.](https://git.uwaterloo.ca/dgrinton/cs346-project/-/wikis/Meeting-Minutes)
-
 ## Reflections on Practices
+Read on how the team reflects on our practices throughout development [here.]()
