@@ -7,3 +7,4 @@
 6. [Store course material](https://git.uwaterloo.ca/dgrinton/cs346-project/-/issues/4)
 7. [Light/Dark mode](https://git.uwaterloo.ca/dgrinton/cs346-project/-/issues/6)
 8. [Rate a course](https://git.uwaterloo.ca/dgrinton/cs346-project/-/issues/1)
+9. [KTOR web service to move everything database-related to a REST API call](https://git.uwaterloo.ca/dgrinton/cs346-project/-/issues/23)
