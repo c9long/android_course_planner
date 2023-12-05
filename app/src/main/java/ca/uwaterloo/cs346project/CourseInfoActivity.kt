@@ -29,19 +29,19 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
+import kotlinx.serialization.Serializable
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-
-
+@Serializable
 data class CourseReview(val reviewer: String, val courseCode: String, val date: String, val content: String, val stars: Int)
 
 val noOfferings: String = "Course not offered this term."
@@ -49,6 +49,7 @@ val noOfferings: String = "Course not offered this term."
 class CourseInfoActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val currentlyLoggedInUser = intent.getStringExtra("CURRENT_USER") ?: ""
         setContent {
             Cs346projectTheme {
                 Surface(
@@ -56,31 +57,33 @@ class CourseInfoActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     // Extract course information from intent extras
-                    val currentlyLoggedInUser = intent.getStringExtra("CURRENT_USER") ?: ""
                     val courseCode = intent.getStringExtra("COURSE_CODE") ?: ""
                     val courseName = intent.getStringExtra("COURSE_NAME") ?: ""
                     val courseDescription = intent.getStringExtra("COURSE_DESCRIPTION") ?: ""
                     var courseOfferings: List<CourseSchedule>
                     try {
+                        println(courseCode)
                         courseOfferings = UWAPIHelper.getCourseScheduleData(courseCode)
                     } catch (e: Exception) {
+                        println("error")
                         courseOfferings = listOf(CourseSchedule(noOfferings, 0, 0, "", "", ""))
                     }
 
                     CourseInfoScreen(
                         currentlyLoggedInUser, courseCode, courseName, courseDescription,
-                        courseOfferings, onBackButtonClick = { navigateBackToMainActivity() }
+                        courseOfferings, onBackButtonClick = { navigateBackToMainActivity(currentlyLoggedInUser) }
                     )
                 }
             }
             BackHandler {
-                navigateBackToMainActivity()
+                navigateBackToMainActivity(currentlyLoggedInUser)
             }
         }
     }
-    private fun navigateBackToMainActivity() {
+    private fun navigateBackToMainActivity(currentlyLoggedInUser: String) {
         // Create an Intent to navigate back to MainActivity
         val intent = Intent(this, HomePageActivity::class.java)
+        intent.putExtra("CURRENT_USER", currentlyLoggedInUser)
 
         startActivity(intent)
         finish()
@@ -98,12 +101,13 @@ fun CourseInfoScreen(
     onBackButtonClick: () -> Unit,
 ) {
     var showToast by remember { mutableStateOf(false) }
+    var allReviews by remember { mutableStateOf<List<CourseReview>?>(null) }
 
     MaterialTheme (
         typography = Typography(),
         shapes = Shapes()
     ) {
-        val dbHelper = UserDBHelper(LocalContext.current)
+        val dbHelper = UserDBHelper()
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
@@ -195,12 +199,37 @@ fun CourseInfoScreen(
                     onSubmitReview = { reviewContent, rating ->
                         val currentDate = SimpleDateFormat("MMMM dd, yyyy", Locale.US).format(Date())
                         val newReview = CourseReview(currentlyLoggedInUser, courseCode, currentDate, reviewContent, rating)
-                        dbHelper.addReview(newReview)
+                        dbHelper.addReview(newReview, object : ResponseCallback {
+                            override fun onSuccess(responseBody: String) {
+                                println("review added")
+                            }
+                            override fun onFailure(e: IOException) {
+                                println("failed to add review")
+                            }
+                        })
+
                     }
                 )
             }
 
-            CourseReviews(dbHelper.getAllReviewsFrom(courseCode))
+            dbHelper.getAllReviewsFrom(courseCode) { reviews, error ->
+                if (error != null) {
+                    // Handle error
+                    println("Error fetching reviews: ${error.message}")
+                } else if (reviews != null) {
+                    // Use the List<CourseReview>
+                    allReviews = reviews
+                }
+            }
+
+            if (allReviews != null) {
+                // Display the reviews
+                CourseReviews(allReviews!!)
+            } else {
+                // Display a loading indicator or a message
+                Text("Loading reviews...")
+            }
+
 
             Box(
                 modifier = Modifier
@@ -222,11 +251,19 @@ fun CourseInfoScreen(
 @Composable
 fun AddCourseButton(currUser: String, cs: CourseSchedule, course: Course, onClick: () -> Unit) {
     // Material Design button that triggers the custom toast when clicked
-    val dbHelper = UserDBHelper(LocalContext.current)
+    val dbHelper = UserDBHelper()
     Button(
         onClick = {
             onClick()
-            dbHelper.addEnrollment(currUser, cs, course)
+            dbHelper.addEnrollment(currUser, cs, course, object: ResponseCallback {
+                override fun onSuccess(responseBody: String) {
+                    println("Successfully added enrollment")
+                }
+
+                override fun onFailure(e: IOException) {
+                    println("Enrollment not added")
+                }
+            })
         },
         modifier = Modifier.padding(0.dp)
     ) {

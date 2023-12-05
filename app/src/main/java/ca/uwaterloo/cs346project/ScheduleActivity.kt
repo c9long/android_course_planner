@@ -1,9 +1,7 @@
 package ca.uwaterloo.cs346project
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -15,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,34 +30,57 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 import kotlin.math.roundToInt
 
 
+@Serializer(forClass = LocalDateTime::class)
+object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
+    private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("LocalDateTime", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: LocalDateTime) {
+        val string = value.format(formatter)
+        encoder.encodeString(string)
+    }
+
+    override fun deserialize(decoder: Decoder): LocalDateTime {
+        val string = decoder.decodeString()
+        return LocalDateTime.parse(string, formatter)
+    }
+}
+
+@Serializable
 data class Event(
     val name: String,
+    @Serializable(with = LocalDateTimeSerializer::class)
     var start: LocalDateTime,
+    @Serializable(with = LocalDateTimeSerializer::class)
     var end: LocalDateTime,
     val description: String? = null,
-    val color: Color = Color(0xFFe6be8a),
 )
 
 val EventTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -73,7 +93,7 @@ fun BasicEvent(
         modifier = modifier
             .fillMaxSize()
             .padding(end = 2.dp, bottom = 2.dp)
-            .background(event.color, shape = RoundedCornerShape(4.dp))
+            .background(Color(0xFFe6be8a), shape = RoundedCornerShape(4.dp))
             .padding(4.dp)
     ) {
         Text(
@@ -104,14 +124,12 @@ fun BasicEvent(
 private var Events = listOf<Event>(
     Event(
         name = "placeholder",
-        color = Color(0xFFAFBBF2),
         start = LocalDateTime.parse("2023-05-14T00:00:00"),
         end = LocalDateTime.parse("2023-05-14T00:00:00"),
         description = "keep the calendar open to 7 days",
     ),
     Event(
         name = "placeholder2",
-        color = Color(0xFFAFBBF2),
         start = LocalDateTime.parse("2023-05-20T00:00:00"),
         end = LocalDateTime.parse("2023-05-20T00:00:00"),
         description = "keep the calendar open to 7 days",
@@ -146,11 +164,19 @@ private var Events = listOf<Event>(
 //    ),
 )
 @Composable
-fun CreateEventList (
+fun createEventList (
     currentUser: String,
-) : List<Event> {
-    val dbHelper = UserDBHelper(LocalContext.current)
-    return dbHelper.getAllEnrollments(currentUser)
+) : List<Event>? {
+    var allEnrollments by remember { mutableStateOf<List<Event>?>(null) }
+    val dbHelper = UserDBHelper()
+    dbHelper.getAllEnrollments(currentUser) { enrollments, error ->
+        if (error != null) {
+            println("Error: ${error.message}")
+        } else {
+            allEnrollments = enrollments
+        }
+    }
+    return allEnrollments
 }
 
 class ScheduleActivity : ComponentActivity() {
@@ -165,9 +191,13 @@ class ScheduleActivity : ComponentActivity() {
                 ) {
                     Cs346projectTheme {
                         val currUser = intent.getStringExtra("CURRENT_USER") ?: ""
-                        println(currUser)
-                        val sampleEvents = CreateEventList(currUser)
-                        Schedule(sampleEvents)
+                        val sampleEvents = createEventList(currUser)
+                        if (sampleEvents != null) {
+                            Schedule(sampleEvents)
+                        }
+                        else {
+                            Schedule(listOf())
+                        }
                     }
                 }
             }
@@ -250,7 +280,7 @@ fun ScheduleHeader(
 ) {
     Row(modifier = modifier) {
         val numDays = 7
-            //ChronoUnit.DAYS.between(minDate, maxDate).toInt() + 1
+        //ChronoUnit.DAYS.between(minDate, maxDate).toInt() + 1
         repeat(numDays) { i ->
             Box(modifier = Modifier.width(dayWidth)) {
                 dayHeader(minDate.plusDays(i.toLong()))

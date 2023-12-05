@@ -2,18 +2,20 @@ package ca.uwaterloo.cs346project
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.IOException
 
+@Serializable
 data class Course(val code: String, val title: String, val description: String)
+@Serializable
 data class CourseSchedule(val section: String, val enrollment: Int, val maxEnrollment: Int, val meetStart: String, val meetEnd: String, val meetDays: String)
 
 object CourseList: ViewModel() {
@@ -44,22 +46,47 @@ object UWAPIHelper {
     var curTerm: String
 
     init {
-        curTerm = getString(apiGet("/v3/Terms/current"), "termCode")
+        curTerm = apiGet("/v3/Terms/current")?.let { getString(it, "termCode") }.toString()
     }
 
     ///
     /// HTTP Gets
     ///
 
-    fun apiGet(path: String): String {
+    fun apiGet(path: String): String? {
         return runBlocking {
-            val client = HttpClient(CIO)
-            val response: HttpResponse = client.get("https://openapi.data.uwaterloo.ca$path") {
-                header("x-api-key", "95808C46CE8F460FA23F6EAC00316045")
+            val client = OkHttpClient()
+            val request = Request.Builder()
+                .url("https://openapi.data.uwaterloo.ca$path")
+                .header("x-api-key", "95808C46CE8F460FA23F6EAC00316045")
+                .build()
+
+            try {
+                withContext(Dispatchers.IO) { // Dispatch to I/O thread pool
+                    client.newCall(request).execute().use { response ->
+                        if (!response.isSuccessful) throw IOException("Unexpected code $response")
+                        response.body?.string() // Safely return the body string
+                    }
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                null // Handle the error case, possibly returning null or a default value
             }
-            return@runBlocking response.bodyAsText()
         }
     }
+
+//    fun apiGet(path: String): String {
+//        return runBlocking {
+//            val client = OkHttpClient()
+//            val request = Request.Builder()
+//                .url("https://openapi.data.uwaterloo.ca$path")
+//                .header("x-api-key", "95808C46CE8F460FA23F6EAC00316045")
+//                .build()
+//            client.newCall(request).execute().use { response ->
+//                return@runBlocking response.body!!.string()
+//            }
+//        }
+//    }
 
     ///
     /// JSON Gets

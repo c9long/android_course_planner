@@ -9,8 +9,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -23,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ca.uwaterloo.cs346project.ui.theme.Cs346projectTheme
+import java.io.IOException
 
 
 class LoginActivity : ComponentActivity() {
@@ -51,7 +61,7 @@ fun LoginPage() {
     var Login by remember { mutableStateOf(false) }
     var SignUp by remember { mutableStateOf(false) }
 
-    val dbHelper = UserDBHelper(LocalContext.current)
+    val dbHelper = UserDBHelper()
     CourseList // Initialize CourseList in time for searching
     var errorMessage by remember { mutableStateOf("") }
 
@@ -96,12 +106,16 @@ fun LoginPage() {
         Button(
             onClick = {
                 keyboardController?.hide()
-                if (dbHelper.validateUser(username, password)) {
-                    Login = true
-                    errorMessage = ""
-                } else {
-                    errorMessage = "Invalid credentials. Please try again."
-                }
+                dbHelper.validateUser(username, password, object : ResponseCallback {
+                    override fun onSuccess(responseBody: String) {
+                        Login = true
+                        errorMessage = ""
+                    }
+                    override fun onFailure(e: IOException) {
+                        errorMessage = "Invalid credentials. Please try again."
+                        e.printStackTrace()
+                    }
+                })
             },
             modifier = Modifier
                 .fillMaxWidth()
