@@ -249,8 +249,6 @@ class UserDBHelper{
     }
 
     fun isFileExistInFolder(folderId: Int, fileName: String, callback: ResponseCallback) {
-        println(folderId)
-        println(fileName)
         val client = OkHttpClient()
         val httpRequest = Request.Builder()
             .url("http://$URL:8080/fileFolder/isFileExistInFolder/$folderId/${fileName.encodeURLParameter()}")

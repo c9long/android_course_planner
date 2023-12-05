@@ -454,7 +454,6 @@ class FileFolderDB {
             resultSet.close()
             stmt.close()
         }
-        println(fileList)
         return fileList
     }
 
@@ -478,7 +477,6 @@ class FileFolderDB {
             stmt.setInt(2, folderId)
             val resultSet = stmt.executeQuery()
             val exists = resultSet.next() && resultSet.getInt(1) > 0
-            println(exists)
             resultSet.close()
             stmt.close()
             return exists

@@ -50,6 +50,7 @@ class CourseInfoActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val currentlyLoggedInUser = intent.getStringExtra("CURRENT_USER") ?: ""
+        println(currentlyLoggedInUser)
         setContent {
             Cs346projectTheme {
                 Surface(
@@ -62,7 +63,6 @@ class CourseInfoActivity : ComponentActivity() {
                     val courseDescription = intent.getStringExtra("COURSE_DESCRIPTION") ?: ""
                     var courseOfferings: List<CourseSchedule>
                     try {
-                        println(courseCode)
                         courseOfferings = UWAPIHelper.getCourseScheduleData(courseCode)
                     } catch (e: Exception) {
                         println("error")
@@ -202,6 +202,13 @@ fun CourseInfoScreen(
                         dbHelper.addReview(newReview, object : ResponseCallback {
                             override fun onSuccess(responseBody: String) {
                                 println("review added")
+                                dbHelper.getAllReviewsFrom(courseCode) { reviews, error ->
+                                    if (error != null) {
+                                        println("Error fetching reviews: ${error.message}")
+                                    } else if (reviews != null) {
+                                        allReviews = reviews
+                                    }
+                                }
                             }
                             override fun onFailure(e: IOException) {
                                 println("failed to add review")
@@ -214,10 +221,8 @@ fun CourseInfoScreen(
 
             dbHelper.getAllReviewsFrom(courseCode) { reviews, error ->
                 if (error != null) {
-                    // Handle error
                     println("Error fetching reviews: ${error.message}")
                 } else if (reviews != null) {
-                    // Use the List<CourseReview>
                     allReviews = reviews
                 }
             }

@@ -175,8 +175,6 @@ fun Application.configureRouting() {
             get("/isFileExistInFolder/{folderId}/{fileName}") {
                 val folderId = call.parameters["folderId"]?.toInt() ?: return@get call.respond(HttpStatusCode.BadRequest)
                 val fileName = call.parameters["fileName"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-                println(folderId)
-                println(fileName)
                 val exists = fileFolderDB.isFileExistInFolder(folderId, fileName)
                 if (exists) {
                     call.respond(HttpStatusCode.OK, "file exists")

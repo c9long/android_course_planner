@@ -6,4 +6,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+UserDatabase.db
 /.idea
