@@ -1,7 +1,7 @@
 # CS346 Course Planner Android Project
 ## Instructions to Install
 First, we need to set up the server. Within an Android emulator, such as Android Studio, open your terminal and enter the following command
-```git clone https://git.uwaterloo.ca/dgrinton/cs346-project.git```
+`git clone https://git.uwaterloo.ca/dgrinton/cs346-project.git`
 Navigate to the latest available release below, or using the link to view all software releases [here.](https://git.uwaterloo.ca/dgrinton/cs346-project/-/tree/main/release) Download the latest installer APK, and drag onto your Android emulator device.
 ### Software Releases
 #### v0.3
