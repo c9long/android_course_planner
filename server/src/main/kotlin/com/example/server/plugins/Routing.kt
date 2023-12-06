@@ -241,7 +241,6 @@ fun Application.configureRouting() {
                     call.respond(HttpStatusCode.InternalServerError, "folder does not exist")
                 }
             }
-
         }
     }
 }
