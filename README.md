@@ -27,6 +27,6 @@ View our project's proposal [here.](https://git.uwaterloo.ca/dgrinton/cs346-proj
 ### Revised High-Level Architecture and Design
 View the latest architecture and design diagrams [here.](https://git.uwaterloo.ca/dgrinton/cs346-project/-/wikis/Project-Final-Architecture-and-Design)
 ## Reflections on Practices
-Read about how the team reflects on our practices throughout development [here.]()
+Read about how the team reflects on our practices throughout development [here.](https://git.uwaterloo.ca/dgrinton/cs346-project/-/wikis/Final-Reflection)
 ### Meeting Minutes
 View the logged meeting minutes [here.](https://git.uwaterloo.ca/dgrinton/cs346-project/-/wikis/Meeting-Minutes)
