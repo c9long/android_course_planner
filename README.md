@@ -4,9 +4,13 @@ First, we need to set up the server. Within an Android emulator, such as Android
 
 `git clone https://git.uwaterloo.ca/dgrinton/cs346-project.git`
 
-Once the repository is cloned, open the repository in your emulator. Ensure that a folder named `.idea` does not exist in the project directory. Navigate to the server directory in the repository. Navigate to `src/main/java/com.example.server/Application.kt`. There is a small green "play" button next to the main function, denoted by `fun main()`. Click that button and select 'Run ApplicationKt.'
+To run the server, either run the `server.sh` file or run the following commands from the `server` folder:
 
-Drag the APK from its installed location onto your emulated device. It will now work properly.
+`docker docker build -t dockerfile .`
+
+`docker run -p 8080:8080 dockerfile .`
+
+To run the client, drag the APK from its installed location onto your emulated device. It will now work properly.
 
 Navigate to the latest available release below, or using the link to view all software releases [here.](https://git.uwaterloo.ca/dgrinton/cs346-project/-/tree/main/release) Download the latest installer APK, and drag onto your emulated Android device.
 ### Software Releases
